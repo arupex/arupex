@@ -137,7 +137,7 @@ Routes allows you to have a http server associated with your serverless function
 
 [Learn More About DataServices](./docs/DataServices.md)
 
-###Responses - are an abstraction for the underlying callback it be a callback to AWS lambda/Gateway or to NODE.js http socket
+### Responses - are an abstraction for the underlying callback it be a callback to AWS lambda/Gateway or to NODE.js http socket
 
 
 [Learn More About Responses](./docs/Responses.md)
