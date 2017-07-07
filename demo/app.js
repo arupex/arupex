@@ -4,7 +4,10 @@
 let start = process.hrtime();
 
 //this is synchronous
-let interceptors = require('../arupex').interceptors;
+let arupex = require('../arupex');
+let logger = new arupex.lib.logger('Demo');
+
+let interceptors = arupex.interceptors;
 
 if(process.env.server) {
     interceptors.http.start(1234, {
@@ -13,21 +16,52 @@ if(process.env.server) {
 }
 else {
     let lambdas = interceptors.lambdas({
-        dir: __dirname
+        dir: __dirname,
+        meterFnc : function meterFinish(meter){
+            if(process.env.DEBUG) {
+                logger.info('meter', meter);
+            }
+        },
+        traceFnc : function traceFinish(type, traceName, value, other, traceRoute){
+            if(process.env.DEBUG){
+                logger.info('trace', type, traceName, value, other, traceRoute);
+            }
+        }
     });
     let end = process.hrtime(start);
-    console.log('boot time was', (end[0] * 1e9 + end[1]) / 1000000, 'ms');
+    logger.info('boot time was', (end[0] * 1e9 + end[1]) / 1000000, 'ms');
 
 //lets execute our lambda for this demo (normally you would module.handler = lambdas;)
+
+
+    let event = {
+        currency: 'USD'
+    };
+
+    let context = {
+        mockData : process.env.MOCK?{
+            UserDataService : {
+                getOtherCurrency : {
+                    data : 'CAD'
+                }
+            },
+            CurrencyDataService : {
+                getLatestBase : {
+                    data : { MOCK : true }
+                }
+            }
+        }:undefined
+    };
+
     let start2 = process.hrtime();
 
-    lambdas.userCurrency({
-        currency: 'USD'
-    }, {}, (err, data, res) => {
+    let lambdaCallback = function(err, data) {
         let end2 = process.hrtime(start2);
-        console.log('run time was', (end2[0] * 1e9 + end2[1]) / 1000000, 'ms');
+        logger.info('run time was', (end2[0] * 1e9 + end2[1]) / 1000000, 'ms');
 
-        console.log('err', err, 'data', data, 'res', res);
+        logger.info('err', err, 'data', data);
+        process.exit(0);
+    };
 
-    });
+    lambdas.userCurrency(event, context, lambdaCallback);
 }

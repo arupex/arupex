@@ -7,6 +7,7 @@
 ![lifetimeDownloadCount](https://img.shields.io/npm/dt/arupex.svg?maxAge=2592000)
 
 ### What is Arupex?
+
 Arupex is a Serverless/Server framework for NodeJS
 It allows you to build a serverless application for your needs, but also allows you to wrap that with a http server if need be
 
@@ -145,6 +146,7 @@ Routes allows you to have a http server associated with your serverless function
 ### Workers - allow you to run tasks
 
 ##### Interval-Workers
+
 Workers are great if you want a task to happen asynchronously in the background without user/client triggering
 if you wanted to create a 'cron' worker you would go about this similarly to
 
@@ -160,6 +162,11 @@ Example:
 
 [Learn More About Workers](./Workers.md)
 
+# Mocks
+
+Arupex simplifies the mocking process by generating mocks for you based on a schema generated from your actual code!
+
+[Learn More About Mocks](./Mocking.md)
 
 ### Need More Help? Open an Issue [Here](https://github.com/arupex/arupex/issues/new) or @dirwin517
 ### Want to improve this documentation? [Do a Pull Request](https://github.com/arupex/arupex-demo)

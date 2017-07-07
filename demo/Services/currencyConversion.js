@@ -4,7 +4,9 @@
 module.exports = function(CurrencyDataService, UserDataService){
 
     function getRates(){
-        return CurrencyDataService.getLatestBase({ base : UserDataService.getOtherCurrency() });
+        return UserDataService.getOtherCurrency().then(base => {
+            return CurrencyDataService.getLatestBase({base: base});
+        });
     }
 
     return {

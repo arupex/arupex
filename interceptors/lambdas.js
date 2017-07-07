@@ -142,8 +142,9 @@ module.exports = function(opts){
 
         acc[lambdaName] = function(event, context, callback){
 
-            if(event[mockDataProperty] || context[mockDataProperty]){
-                useableDataServices = structured.toImplentation(event[mockDataProperty] || context[mockDataProperty]);
+            let mockContext = event[mockDataProperty] || context[mockDataProperty];
+            if(mockContext){
+                useableDataServices = structured.toImplentation(mockContext);
                 Object.keys(injectableDataServices).forEach((serviceName) => {
                    if(typeof injectableDataServices[serviceName].overrideable === 'boolean' && !injectableDataServices[serviceName].overrideable){//if false but not falsey
                        useableDataServices[serviceName] = injectableDataServices[serviceName];

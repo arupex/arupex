@@ -4,10 +4,10 @@
 module.exports = function(customHook) {
     return {
         getCurrency: function () {
-            return 'USD';
+            return Promise.resolve('USD');
         },
         getOtherCurrency: function () {
-            return customHook.getCurrencyCode();
+            return Promise.resolve(customHook.getCurrencyCode());
         }
     };
 };
