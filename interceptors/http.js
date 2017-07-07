@@ -42,5 +42,3 @@ module.exports = {
       server.listen(port || 1337);
   }
 };
-
-module.exports.start(1337, { dir : __dirname + '/../demo'});

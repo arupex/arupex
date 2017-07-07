@@ -17,7 +17,7 @@ It allows you to build a serverless application for your needs, but also allows 
  - Making Dependency Injection simple and elegant
 
 
-# Examples - [download example project](https://github.com/arupex/arupex.com/archive/master.zip)
+# Examples - [download example project](https://github.com/arupex/arupex-demo/archive/master.zip)
  
 ### Environments
  - This is where you put configuration data for things like data services (connection strings)
@@ -33,7 +33,7 @@ Example:
     };
     
     
-[Learn More About Environments](./docs/Environments.md)
+[Learn More About Environments](./Environments.md)
 
 ----
 
@@ -47,7 +47,7 @@ Routes allows you to have a http server associated with your serverless function
         '/api/v1/ping?locale={{locale}}&time={optionalTime}' : 'FunctionName'
     };
 
-[Learn More About Routes](./docs/Routes.md)
+[Learn More About Routes](./Routes.md)
 
 
 ### Functions - are essentially controllers help call underlying business code (Services)
@@ -61,7 +61,7 @@ Routes allows you to have a http server associated with your serverless function
         });
     };
 
-[Learn More About Functions](./docs/Functions.md)
+[Learn More About Functions](./Functions.md)
 
 ### Hooks - are injectable to Policies/Services/DataServices
 
@@ -72,7 +72,7 @@ Routes allows you to have a http server associated with your serverless function
         };
     };
 
-[Learn More About Hooks](./docs/Hooks.md)
+[Learn More About Hooks](./Hooks.md)
 
 ### Policies - are good for checking parameters / checking authentication / authorization
     
@@ -86,7 +86,7 @@ Routes allows you to have a http server associated with your serverless function
         });
     };
 
-[Learn More About Policies](./docs/Policies.md)
+[Learn More About Policies](./Policies.md)
 
 ### Services - are internal components that handle data manipulation and handeling business logic
 
@@ -102,7 +102,7 @@ Routes allows you to have a http server associated with your serverless function
         };
     };
     
-[Learn More About Services](./docs/Services.md)
+[Learn More About Services](./Services.md)
 
 ### DataServices - are mockable services which call out to other external components
 
@@ -135,12 +135,12 @@ Routes allows you to have a http server associated with your serverless function
     //cannot be mocked
     module.exports.overrideable = false;
 
-[Learn More About DataServices](./docs/DataServices.md)
+[Learn More About DataServices](./DataServices.md)
 
 ### Responses - are an abstraction for the underlying callback it be a callback to AWS lambda/Gateway or to NODE.js http socket
 
 
-[Learn More About Responses](./docs/Responses.md)
+[Learn More About Responses](./Responses.md)
 
 ### Workers - allow you to run tasks
 
@@ -158,8 +158,8 @@ Example:
     };
     module.exports.interval = 60000;//every minute
 
-[Learn More About Workers](./docs/Workers.md)
+[Learn More About Workers](./Workers.md)
 
 
 ### Need More Help? Open an Issue [Here](https://github.com/arupex/arupex/issues/new) or @dirwin517
-### Want to improve this documentation? [Do a Pull Request](https://github.com/arupex/arupex.com)
+### Want to improve this documentation? [Do a Pull Request](https://github.com/arupex/arupex-demo)
