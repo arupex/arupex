@@ -7,6 +7,9 @@
     "test": "jshint lib || exit 1;mocha test || exit 1;",
     "prepublishOnly" : "npm test"
   },
+  "bin" : {
+    "arupex":"bin/arupex.Cli.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/arupex/arupex.git"

@@ -1,5 +1,5 @@
-/**
- * Created by daniel.irwin on 5/23/17.
- */
-let cmd = process.argv[2];
-let args = process.argv.slice(2);
+#!/usr/bin/env node
+
+require('../arupex').interceptors.http.start(process.env.PORT || 1337, {
+    dir: process.cwd()
+});
