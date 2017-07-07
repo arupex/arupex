@@ -1,4 +1,10 @@
 /**
  * Created by daniel.irwin on 5/22/17.
  */
-module.exports = require('refab').LoadDirModules(__dirname + '/lib', false);
+
+let loadDirectories = require(__dirname + '/lib/requireDirectory').requireDirSync;
+
+module.exports = {
+    interceptors : loadDirectories(__dirname + '/interceptors'),
+    lib : loadDirectories(__dirname + '/lib')
+};

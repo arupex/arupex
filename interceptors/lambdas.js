@@ -3,26 +3,35 @@
  */
 module.exports = function(opts){
 
+    const DEFAULT_WORKER_INTERVAL = 60 * 1000;//every minute
+
+    let meter           = require('../lib/meter');
+
     let directoryLoader = require('../lib/requireDirectory');
     let injector        = require('../lib/injector');
     let cookieParser    = require('../lib/cookieParser');
     let logger          = require('../lib/logger');
     let tracer          = require('../lib/trace');
-    let meter           = require('../lib/meter');
+
     let pipeline        = require('../lib/pipeline');
     let i18n            = require('../lib/i18n');
+
     let docGenerator    = require('../lib/docGenerator');
     let structured      = require('../lib/structured');
     let clientBuilder   = require('../lib/clientBuilder');
 
     let dir             = opts.dir || process.cwd();
 
-    let services        = directoryLoader.requireDirSync(opts.serviceDir         || `${dir}/Services`,     opts.watch || opts.watchServicesDir);
-    let dataServices    = directoryLoader.requireDirSync(opts.dataServiceDir     || `${dir}/DataServices`, opts.watch || opts.watchDataServicesDir);
-    let policies        = directoryLoader.requireDirSync(opts.policyDir          || `${dir}/Policies`,     opts.watch || opts.watchPoliciesDir);
-    let responses       = directoryLoader.requireDirSync(opts.responsesDir       || `${dir}/Responses`,    opts.watch || opts.watchResponsesDir);
-    let lambdaFunctions = directoryLoader.requireDirSync(opts.lambdaFunctionsDor || `${dir}/Functions`,    opts.watch || opts.watchLambdaFunctionsDir);
-    let envs            = directoryLoader.requireDirSync(opts.environmentsDir    || `${dir}/Environments`, opts.watch || opts.watchEnvironmentsDir);
+    let routes          = require(`${dir}/routes`);
+
+    let hooks           = directoryLoader.requireDirSync(`${dir}/Hooks`,        opts.watch);
+    let services        = directoryLoader.requireDirSync(`${dir}/Services`,     opts.watch);
+    let dataServices    = directoryLoader.requireDirSync(`${dir}/DataServices`, opts.watch);
+    let policies        = directoryLoader.requireDirSync(`${dir}/Policies`,     opts.watch);
+    let responses       = directoryLoader.requireDirSync(`${dir}/Responses`,    opts.watch);
+    let lambdaFunctions = directoryLoader.requireDirSync(`${dir}/Functions`,    opts.watch);
+    let envs            = directoryLoader.requireDirSync(`${dir}/Environments`, opts.watch);
+    let workers         = directoryLoader.requireDirSync(`${dir}/Workers`,      opts.watch);
 
     let activeEnvironment = envs[process.env.ENVIRONMENT || 'dev'];
     if(!activeEnvironment){
@@ -32,6 +41,8 @@ module.exports = function(opts){
     let mockDataProperty = opts.mockDataProperty || 'mockData';
 
     let injectableDataServices = {};
+
+    let swagger = docGenerator.generateFromUrls(Object.keys(routes), routes.headers);
 
     function calculateInjectableDataServices(nonInjectableServices) {
         if (nonInjectableServices) {
@@ -49,7 +60,7 @@ module.exports = function(opts){
             }, {});
         }
         return {};
-    };
+    }
 
     injectableDataServices = calculateInjectableDataServices(dataServices);
 
@@ -77,7 +88,8 @@ module.exports = function(opts){
                     i18n: i18n,
                     meter: meter,
                     tracer: tracer,
-                    logger: logger
+                    logger: logger,
+                    swagger: swagger
                 }, useableDataServices), instantiatedServices);
 
                 injector(injectables, v);
@@ -87,25 +99,45 @@ module.exports = function(opts){
     }
 
 
-    function initResponses(responses, callback) {
+    function initResponses(injectables, responses) {
         return Object.keys(responses).reduce((acc, v) => {
             acc[v] = function (data) {//it is assumed that responses have 1 external parameter from the user (function)
-                injector({callback: callback, data: data}, responses[v]);
+                injector(Object.assign( {data : data}, injectables), responses[v]);
             };
             return acc;
         }, {});
     }
 
 
-    let metricTracer    = require('../lib/metricTracer')(function meterFinish(meter){
-console.log('meter', meter);
-    }, function traceFinish(type, traceName, value, other, traceRoute){
-console.log('trace', type, traceName, value, other, traceRoute);
+    let metricTracer    = require('../lib/metricTracer')(opts.meterFnc || function meterFinish(meter){
+        console.log('meter', meter);
+    }, opts.traceFnc || function traceFinish(type, traceName, value, other, traceRoute){
+        console.log('trace', type, traceName, value, other, traceRoute);
+    });
+
+
+    //Workers are agnostic of lambda endpoints
+    let workerInstances = {};
+
+    Object.keys(workers).forEach( worker => {
+        if(typeof workers[worker] === 'function') {
+            workerInstances[worker] = setInterval(function(){
+                injector({
+                    logger : logger,
+                    env : activeEnvironment,
+                    tracer : tracer,
+                    meter : meter,
+                    i18n : i18n
+                }, workers[worker]);
+            }, worker.interval || DEFAULT_WORKER_INTERVAL);
+        }
     });
 
     return Object.keys(lambdaFunctions).reduce( (acc, lambdaName) => {
 
+        //add the active function to the tail end of the middlware array
         let middleware = policiesArray.concat(lambdaFunctions[lambdaName]);
+
         let useableDataServices = injectableDataServices;
 
         acc[lambdaName] = function(event, context, callback){
@@ -113,24 +145,52 @@ console.log('trace', type, traceName, value, other, traceRoute);
             if(event[mockDataProperty] || context[mockDataProperty]){
                 useableDataServices = structured.toImplentation(event[mockDataProperty] || context[mockDataProperty]);
                 Object.keys(injectableDataServices).forEach((serviceName) => {
-                   if(typeof injectableDataServices[serviceName].overrideable !== 'undefined' && !injectableDataServices[serviceName].overrideable){//if false but not falsey
+                   if(typeof injectableDataServices[serviceName].overrideable === 'boolean' && !injectableDataServices[serviceName].overrideable){//if false but not falsey
                        useableDataServices[serviceName] = injectableDataServices[serviceName];
                    }
                 });
             }
 
-            useableDataServices = initServices({
+            //give hooks event,context, etc injectables
+            let useableHooks = metricTracer(initServices({
                 event: event,
                 context: context,
                 meter: meter,
                 tracer: tracer,
-                logger: logger
-            }, useableDataServices);//allow dataservices to have event or context injected within
+                logger: logger,
+                i18n : i18n,
+                env : activeEnvironment
+            }, hooks));
 
-            let instantiatedServices = initServices(useableDataServices, services);
-            let injectableResponse   = initResponses(responses, callback);
+            //give data services event,context injectables as well as hooks
+            useableDataServices = metricTracer(initServices(Object.assign({
+                event: event,
+                context: context,
+                meter: meter,
+                tracer: tracer,
+                logger: logger,
+                i18n : i18n,
+                env : activeEnvironment
+            }, useableHooks), useableDataServices));//allow dataservices to have event or context injected within
+
+            //give services the ability to inject data services
+            let instantiatedServices = metricTracer(initServices(Object.assign({
+                event: event,
+                context: context,
+                meter: meter,
+                tracer: tracer,
+                logger: logger,
+                i18n : i18n,
+                env : activeEnvironment
+            }, useableDataServices), services));
+
+            //init responses with the ability to inject the callback and on the fly inject the 'data' param
+            let injectableResponse   = metricTracer(initResponses({ callback : callback }, responses));
+
+            //generate middlware from custom middlware with injectables ( responses, dataServices, services )
             let injectableMiddlware  = initMiddleware(middleware, injectableResponse, useableDataServices, instantiatedServices);
 
+            //create pipeline!
             let lambdaPipeline = pipeline({
                 timeout : false
             }, injectableMiddlware);
@@ -140,7 +200,11 @@ console.log('trace', type, traceName, value, other, traceRoute);
                     err : 'timeout',
                     data : 'timed-out after 1000ms',
                     context: context,
-                    logger : logger
+                    logger : logger,
+                    i18n : i18n,
+                    env : activeEnvironment,
+                    tracer : tracer,
+                    meter : meter
                 }), callback);
             });
 
