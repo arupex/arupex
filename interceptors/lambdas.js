@@ -66,18 +66,6 @@ module.exports = function(opts){
 
     let policiesArray = Object.keys(policies).reduce((acc, v) => {acc.push(policies[v]); return acc;}, []);
 
-    function initServices(useableDataServices, services) {
-        return Object.keys(services).reduce((acc, serviceName) => {
-            if (typeof services[serviceName] === 'function') {
-                acc[serviceName] = injector(useableDataServices, services[serviceName]);
-            }
-            else {
-                acc[serviceName] = services[serviceName];
-            }
-            return acc;
-        }, {});
-    }
-
     function initMiddleware(middleware, injectableResponse, useableDataServices, instantiatedServices) {
         return (middleware).reduce((acc, v) => {
             acc.push(function (req, res, next) {
@@ -138,9 +126,36 @@ module.exports = function(opts){
         //add the active function to the tail end of the middlware array
         let middleware = policiesArray.concat(lambdaFunctions[lambdaName]);
 
+        //allow you to specify the order of your middleware
+        if(opts.orderMiddleware){
+            middleware = middleware.sort(opts.orderMiddleware);
+        }
+
         let useableDataServices = injectableDataServices;
 
         acc[lambdaName] = function(event, context, callback){
+
+            function initServices(injectables, injectees) {
+                return Object.keys(injectees).reduce((acc, injecteeName) => {
+                    if (typeof injectees[injecteeName] === 'function') {
+                        let injected = injector(Object.assign({
+                            event: event,
+                            context: context,
+                            meter: meter,
+                            tracer: tracer,
+                            logger: logger,
+                            i18n : i18n,
+                            env : activeEnvironment
+                        }, injectables), injectees[injecteeName]);
+
+                        acc[injecteeName] = opts.disableTracer ? injected: metricTracer(injected);
+                    }
+                    else {
+                        acc[injecteeName] = opts.disableTracer ? injectees[injecteeName]: metricTracer(injectees[injecteeName]);
+                    }
+                    return acc;
+                }, {});
+            }
 
             let mockContext = event[mockDataProperty] || context[mockDataProperty];
             if(mockContext){
@@ -153,40 +168,17 @@ module.exports = function(opts){
             }
 
             //give hooks event,context, etc injectables
-            let useableHooks = metricTracer(initServices({
-                event: event,
-                context: context,
-                meter: meter,
-                tracer: tracer,
-                logger: logger,
-                i18n : i18n,
-                env : activeEnvironment
-            }, hooks));
+            let useableHooks = initServices({}, hooks);
 
             //give data services event,context injectables as well as hooks
-            useableDataServices = metricTracer(initServices(Object.assign({
-                event: event,
-                context: context,
-                meter: meter,
-                tracer: tracer,
-                logger: logger,
-                i18n : i18n,
-                env : activeEnvironment
-            }, useableHooks), useableDataServices));//allow dataservices to have event or context injected within
+            useableDataServices = initServices(useableHooks, useableDataServices);//allow dataservices to have event or context injected within
 
-            //give services the ability to inject data services
-            let instantiatedServices = metricTracer(initServices(Object.assign({
-                event: event,
-                context: context,
-                meter: meter,
-                tracer: tracer,
-                logger: logger,
-                i18n : i18n,
-                env : activeEnvironment
-            }, useableDataServices), services));
+            let instantiatedServices = initServices(useableDataServices, services);
 
             //init responses with the ability to inject the callback and on the fly inject the 'data' param
-            let injectableResponse   = metricTracer(initResponses({ callback : callback }, responses));
+            let untracedResponses = initResponses({ callback : callback }, responses);
+
+            let injectableResponse   = opts.disableTracer? untracedResponses : metricTracer(untracedResponses);
 
             //generate middlware from custom middlware with injectables ( responses, dataServices, services )
             let injectableMiddlware  = initMiddleware(middleware, injectableResponse, useableDataServices, instantiatedServices);
@@ -197,16 +189,16 @@ module.exports = function(opts){
             }, injectableMiddlware);
 
             lambdaPipeline(context, injectableResponse, (context) => {
-                injector(Object.assign({
-                    err : 'timeout',
-                    data : 'timed-out after 1000ms',
+                injector({
+                    // err : 'timeout',
+                    // data : 'timed-out after 1000ms',
                     context: context,
                     logger : logger,
                     i18n : i18n,
                     env : activeEnvironment,
                     tracer : tracer,
                     meter : meter
-                }), callback);
+                }, callback);
             });
 
         };

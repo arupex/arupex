@@ -31,9 +31,6 @@ else {
     let end = process.hrtime(start);
     logger.info('boot time was', (end[0] * 1e9 + end[1]) / 1000000, 'ms');
 
-//lets execute our lambda for this demo (normally you would module.handler = lambdas;)
-
-
     let event = {
         currency: 'USD'
     };
@@ -63,5 +60,6 @@ else {
         process.exit(0);
     };
 
+    //lets execute our lambda for this demo (normally you would module.handler = lambdas;)//or the specific lambda
     lambdas.userCurrency(event, context, lambdaCallback);
 }
