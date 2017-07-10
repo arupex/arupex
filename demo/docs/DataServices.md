@@ -28,3 +28,8 @@
     
     //cannot be mocked
     module.exports.overrideable = false;
+
+
+### DataServiceUtils - an extension to DataServices
+These are modules which can have data services injected into them but can also be injected to Services as a middleman
+ if your data services dont give you the cleanest data and want to abstract it from your internal Services!

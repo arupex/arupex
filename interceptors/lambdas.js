@@ -19,8 +19,6 @@ module.exports = function (opts) {
         process.stderr.write('error no active environment to set the active environment set the ENVIRONMENT variable - default:dev\n');
     }
 
-    let mockDataProperty = opts.mockDataProperty || 'mockData';
-
     let injectableDataServices = {};
 
     let swagger = lib.docGenerator.generateFromUrls(Object.keys(routes), routes.headers);
@@ -134,6 +132,11 @@ module.exports = function (opts) {
             useableDataServices = injectWrapper(injectables, useableDataServices);//allow dataservices to have event or context injected within
 
             injectables = Object.assign(injectables, useableDataServices);
+
+            //allow someone who can be called by Services that also has access to dataservices for convenience
+            let useableDataServiceUtils = injectWrapper(injectables, app.DataServiceUtils || {});
+
+            injectables = Object.assign(injectables, useableDataServiceUtils);
 
             let instantiatedServices = injectWrapper(injectables, app.Services);
 
