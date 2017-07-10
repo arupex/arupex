@@ -11,9 +11,15 @@ It allows you to build a serverless application for your needs, but also allows 
 ![lifetimeDownloadCount](https://img.shields.io/npm/dt/arupex.svg?maxAge=2592000)
 
 ##Goals
-- Making Testing easier on Developers
- - Making Mocking a thing of the past
+ - Minimizing Boilerplate work
+ - Making Testing easier on Developers
+ - Making Writing Mocks a thing of the past
  - Simplifying Workflows
  - Making Dependency Injection simple and elegant
+ - Making Tracing and Metrics automatic!
+ - Make Rest Documentation Automatic!
+ - Making i18n such as sorting easier/faster
 
-Check out our [Documentation](http://arupex.com)
+Check out our [Documentation](./demo/README.md) 
+
+Soon to be up on [arupex.com](http://arupex.com)

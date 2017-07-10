@@ -22,5 +22,7 @@ Note: the data property inside the Service/FunctionName object, if it was an err
 ### Using 'structured' you can 
 
  - **toImplentation** - creates an implementation via a structure like the one above
+ 
  - **toGenerator** - creates a generator (which can be saved via codeGenerator) which gives you an easy to use interface to modify the structure
+ 
  - **toStructure** - turns an implementation into a structure (minus the data/error properties) think of it as a schema for your mocks
