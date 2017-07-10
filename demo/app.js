@@ -23,6 +23,9 @@ else {
         },
         traceFnc : function traceFinish(type, traceName, value, other, traceRoute){
             logger.info('trace', type, traceName, value, other, traceRoute);
+        },
+        mockContext : function(event, context){
+            return context.mockData;//this is where ive decided to store my mock data when invoked, could be on headers or what ever you please!
         }
     });
 

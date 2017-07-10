@@ -120,7 +120,7 @@ module.exports = function (opts) {
                 }, useableDataServices, injectables), injectees, opts.disableTracer ? null : metricTracer);
             }
 
-            let mockContext = event[mockDataProperty] || context[mockDataProperty];
+            let mockContext = (typeof opts.mockContext === 'function')?opts.mockContext(event, context):null;//user includes a function to extra mocks
             if (mockContext) {
                 useableDataServices = runtimeMockDataServices(useableDataServices, mockContext);
             }
