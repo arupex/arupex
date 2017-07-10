@@ -5,10 +5,10 @@
   "main": "arupex.js",
   "scripts": {
     "test": "jshint lib || exit 1;mocha test || exit 1;",
-    "prepublishOnly" : "npm test"
+    "prepublishOnly": "npm test"
   },
-  "bin" : {
-    "arupex":"bin/arupex.Cli.js"
+  "bin": {
+    "arupex": "bin/arupex.Cli.js"
   },
   "repository": {
     "type": "git",
@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/arupex/arupex#readme",
   "dependencies": {
-    "hyper-request": "0.0.7"
+    "hyper-request": "0.0.8"
   },
   "devDependencies": {
     "mocha": "^3.4.2"

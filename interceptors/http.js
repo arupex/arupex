@@ -24,7 +24,10 @@ module.exports = {
           else {
               lambdas[choosenRoute.rail](Object.assign({
                 cookies : cookieParser(req.headers)
-              }, choosenRoute), {
+              }, choosenRoute, {
+                  body : req.body,
+                  headers : req.headers
+              }), {
 
               }, (err, data, ress) => {
                   if(typeof data !== 'string'){

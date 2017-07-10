@@ -4,7 +4,7 @@
 module.exports = function(event, context){
     return {
       getCurrencyCode : function(){
-          return event.currency || (event.cookies?event.cookies.base:null);
+          return event.currency || (event.cookies?event.cookies.base:null) || (event.queryParams?event.queryParams.base:null);
       }
     };
 };
