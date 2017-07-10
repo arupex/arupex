@@ -40,6 +40,6 @@ else {
         }:undefined
     }, function(err, data) {
         logger.info('data', data);
-        process.exit(0);
+        process.exit(0);//have to use exit here if we dont want the lambda to continue running because of the worker we have
     });
 }
