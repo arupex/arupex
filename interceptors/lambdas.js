@@ -5,7 +5,7 @@ module.exports = function (opts) {
 
     const DEFAULT_WORKER_INTERVAL = 60 * 1000;//every minute
 
-    let directoryLoader = require('../lib/multiDirLoader', (a) => a.indexOf('app.js') === -1);
+    let directoryLoader = require('../lib/multiDirLoader', opts.fileFilter || function(a) {return (a.indexOf('app.js') === -1 && a.indexOf('node_modules') === -1)});
 
     let dir = opts.dir || process.cwd();
 
@@ -89,79 +89,95 @@ module.exports = function (opts) {
         return useableDataServices;
     }
 
-    return Object.keys(app.Functions || {}).reduce((acc, lambdaName) => {
+    let generateExecutableLambdas = function (functions) {
+        return Object.keys(functions || {}).reduce((acc, lambdaName) => {
 
-        //add the active function to the tail end of the middlware array
-        let middleware = policiesArray.concat(app.Functions[lambdaName]);
+            //add the active function to the tail end of the middlware array
+            let middleware = policiesArray.concat(functions[lambdaName]);
 
-        //allow you to specify the order of your middleware
-        if (opts.orderMiddleware) {
-            middleware = middleware.sort(opts.orderMiddleware);
-        }
-
-        acc[lambdaName] = function (event, context, callback) {
-
-            //init responses with the ability to inject the callback and on the fly inject the 'data' param
-            let injectableResponse = initResponses({callback: callback}, app.Responses || {});
-            let useableDataServices = injectableDataServices;
-
-            function injectWrapper(injectables, injectees) {
-                return lib.injector(Object.assign({
-                    res: injectableResponse,
-                    i18n: lib.i18n,
-                    meter: lib.meter,
-                    tracer: lib.tracer,
-                    logger: lib.logger,
-                    swagger: swagger,
-                    event: event,
-                    context: context
-                }, useableDataServices, injectables), injectees, opts.disableTracer ? null : metricTracer);
+            //allow you to specify the order of your middleware
+            if (opts.orderMiddleware) {
+                middleware = middleware.sort(opts.orderMiddleware);
             }
 
-            let mockContext = (typeof opts.mockContext === 'function')?opts.mockContext(event, context):null;//user includes a function to extra mocks
-            if (mockContext) {
-                useableDataServices = runtimeMockDataServices(useableDataServices, mockContext);
-            }
+            acc[lambdaName] = function (event, context, callback) {
 
-            //give hooks event,context, etc injectables
-            let useableHooks = injectWrapper({}, app.Hooks);
+                //init responses with the ability to inject the callback and on the fly inject the 'data' param
+                let injectableResponse = initResponses({callback: callback}, app.Responses || {});
+                let useableDataServices = injectableDataServices;
 
-            let injectables = Object.assign({}, injectableResponse, useableHooks);
+                function injectWrapper(injectables, injectees) {
+                    return lib.injector(Object.assign({
+                        res: injectableResponse,
+                        i18n: lib.i18n,
+                        meter: lib.meter,
+                        tracer: lib.tracer,
+                        logger: lib.logger,
+                        swagger: swagger,
+                        event: event,
+                        context: context
+                    }, useableDataServices, injectables), injectees, opts.disableTracer ? null : metricTracer);
+                }
 
-            //give data services event,context injectables as well as hooks
-            useableDataServices = injectWrapper(injectables, useableDataServices);//allow dataservices to have event or context injected within
+                let mockContext = (typeof opts.mockContext === 'function') ? opts.mockContext(event, context) : null;//user includes a function to extra mocks
+                if (mockContext) {
+                    useableDataServices = runtimeMockDataServices(useableDataServices, mockContext);
+                }
 
-            injectables = Object.assign(injectables, useableDataServices);
+                //give hooks event,context, etc injectables
+                let useableHooks = injectWrapper({}, app.Hooks);
 
-            //allow someone who can be called by Services that also has access to dataservices for convenience
-            let useableDataServiceUtils = injectWrapper(injectables, app.DataServiceUtils || {});
+                let injectables = Object.assign({}, injectableResponse, useableHooks);
 
-            injectables = Object.assign(injectables, useableDataServiceUtils);
+                //give data services event,context injectables as well as hooks
+                useableDataServices = injectWrapper(injectables, useableDataServices);//allow dataservices to have event or context injected within
 
-            let instantiatedServices = injectWrapper(injectables, app.Services);
+                injectables = Object.assign(injectables, useableDataServices);
 
-            injectables = Object.assign(injectables, instantiatedServices);
+                //allow someone who can be called by Services that also has access to dataservices for convenience
+                let useableDataServiceUtils = injectWrapper(injectables, app.DataServiceUtils || {});
 
-            //generate middlware from custom middlware with injectables ( responses, dataServices, services )
-            let injectableMiddlware = injectWrapper(injectables, middleware);
+                injectables = Object.assign(injectables, useableDataServiceUtils);
 
-            //create pipeline!
-            lib.pipeline({
-                timeout: false
-            }, injectableMiddlware)(context, injectableResponse, (event, context) => {
-                injector({
-                    event: event,
-                    context: context,
-                    logger: lib.logger,
-                    i18n: lib.i18n,
-                    env: activeEnvironment,
-                    tracer: lib.tracer,
-                    meter: lib.meter
-                }, callback);
-            });
-        };
+                let instantiatedServices = injectWrapper(injectables, app.Services);
 
-        return acc;
-    }, {});
+                injectables = Object.assign(injectables, instantiatedServices);
+
+                //generate middlware from custom middlware with injectables ( responses, dataServices, services )
+                let injectableMiddlware = injectWrapper(injectables, middleware);
+
+                //create pipeline!
+                lib.pipeline({
+                    timeout: false
+                }, injectableMiddlware)(context, injectableResponse, (event, context) => {
+                    injector({
+                        event: event,
+                        context: context,
+                        logger: lib.logger,
+                        i18n: lib.i18n,
+                        env: activeEnvironment,
+                        tracer: lib.tracer,
+                        meter: lib.meter
+                    }, callback);
+                });
+            };
+
+            return acc;
+        }, {});
+    };
+
+    //support for newer interceptor
+    if(opts.edge){
+        return {
+            functions : app.Functions,
+            lambdasGenerator : generateExecutableLambdas,
+            dataServices : injectableDataServices,
+            swagger : swagger,
+            workers : workerInstances
+    };
+    }
+    else {
+        return generateExecutableLambdas(app.Functions);
+    }
 
 };

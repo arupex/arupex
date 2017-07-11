@@ -11,7 +11,7 @@ describe('multiDirLoader', function(){
 
         console.log('\n\n\n');
 
-        console.log('', loader(`${__dirname}/../demo/`));
+        // console.log('', loader(`${__dirname}/../demo/`));
 
     });
 
