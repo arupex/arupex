@@ -2,6 +2,6 @@
   "name": "arupex-demo",
   "version": "0.0.1",
   "dependencies": {
-    "arupex": "^0.0.7"
+    "arupex": "^0.0.8"
   }
 }
