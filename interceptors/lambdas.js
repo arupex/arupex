@@ -5,12 +5,14 @@ module.exports = function (opts) {
 
     const DEFAULT_WORKER_INTERVAL = 60 * 1000;//every minute
 
-    let directoryLoader = require('../lib/multiDirLoader', opts.fileFilter || function(a) {return (a.indexOf('app.js') === -1 && a.indexOf('node_modules') === -1)});
+    let directoryLoader = require('../lib/multiDirLoader');
+
+    let dirFilter = opts.fileFilter || function(a) {return (a.indexOf('app.js') === -1 && a.indexOf('node_modules') === -1)};
 
     let dir = opts.dir || process.cwd();
 
-    let lib = directoryLoader(`${__dirname}/../lib/`);
-    let app = directoryLoader(`${dir}/`);
+    let lib = directoryLoader(`${__dirname}/../lib/`, dirFilter);
+    let app = directoryLoader(`${dir}/`, dirFilter);
 
     let routes = opts.routes || [];
 
