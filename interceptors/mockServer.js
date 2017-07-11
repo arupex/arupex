@@ -5,7 +5,7 @@ module.exports = function mockServer(port, opts) {
     const arupex = require('../arupex');
     const http = require('http');
     const fs = require('fs');
-    let dir = opts.dir || process.cwd();
+    let dir = opts?opts.dir:null || process.cwd();
 
     if (!opts) {
 
