@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+    <meta charset="UTF-8">
+    <title>Primer</title>
+</head>
+<body>
+
+<div id="contextAndEvent" style="border: 1px solid black; padding: 15px; background-color: grey;">
+    Input<br/>
+    <div style="display:inline-block;width:45%; border: 5px solid black; padding: 15px; background-color: darkgrey;">
+        Event<br>
+        <textarea id="event" rows="12"
+                  onblur="validateJSON('event')"
+                  style="width: 100%; border: 1px solid black;">{}</textarea>
+    </div>
+    <div style="display:inline-block;width:45%; border: 5px solid black; padding: 15px; background-color: darkgrey;">
+        Context<br>
+        <textarea id="context" rows="12"
+                  onblur="validateJSON('context')"
+                  style="width: 100%; border: 1px solid black;">{}</textarea>
+    </div>
+</div>
+
+
+<button onclick="save()">SAVE</button>
+<button onclick="load()">LOAD</button>
+
+<input type="file" id="files" name="files"/>
+<button onclick="download()">Save To File</button>
+
+
+<button onclick="Run()">Execute</button>
+<select id="functionName">
+</select>
+
+<label>Enable Mocks</label><input type="checkbox" id="enableMocks" value="Enable Mocks">
+
+<div id="outputBlock" style="border: 1px solid black; padding: 15px; background-color: grey;">
+    Output
+        <textarea id="output" rows="12" style="width: 100%; border: 1px solid black;"></textarea>
+    </div>
+</div>
+
+
+<script>
+    var primerData = {};
+    var schema = {};
+
+    function Run() {
+
+        var funcSelector = document.getElementById('functionName');
+        var functionName = funcSelector.options[funcSelector.selectedIndex].value;
+
+        var event = document.getElementById('event').value;
+        var context = document.getElementById('context').value;
+
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                document.getElementById('output').value = this.responseText;
+            }
+        };
+        xhttp.open("POST", "/endpoint", true);
+        save();
+        var enableMocks = document.getElementById('enableMocks').checked;
+
+        var mockData = JSON.stringify(primerData);
+
+        var eventJson = JSON.stringify(event);
+        if(enableMocks){
+            eventJson = eventJson.replace(/mockDataReplace/g, mockData);
+        }
+
+        var contextJson = JSON.stringify(context);
+        if(enableMocks){
+            contextJson = contextJson.replace(/mockDataReplace/g, mockData);
+        }
+
+
+        xhttp.send(JSON.stringify({
+            functionName: functionName,
+            event: JSON.parse(eventJson),
+            context: JSON.parse(contextJson)
+        }));
+    }
+
+    function load() {
+        primerData = JSON.parse(localStorage.getItem('primerData'));
+        document.getElementById('allData').value = JSON.stringify(primerData, null, 3);
+        Object.keys(schema).forEach(function (service) {
+            Object.keys(schema[service]).forEach(function (func) {
+                if (primerData && primerData[service] && primerData[service][func]) {
+                    document.getElementById(service + "." + func).value = JSON.stringify(primerData[service][func], null, 3);
+                }
+            });
+        });
+    }
+    function download() {
+        save();
+        var aFileParts = [JSON.stringify(primerData, null, 3)];
+        var oMyBlob = new Blob(aFileParts, {type: 'application/json'}); // the blob
+        window.open(URL.createObjectURL(oMyBlob));
+    }
+    function loadSchemaFile() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                var result = JSON.parse(this.responseText);
+                loadFunctions(result.functionNames);
+                schema = result.schema;
+                loadScheme(schema);
+            }
+        };
+        xhttp.open("GET", "primer_schema.json", true);
+        xhttp.send();
+    }
+
+    function loadFunctions(functionNames) {
+        var functionName = document.getElementById('functionName');
+        functionNames.forEach(function (name) {
+            var opt = document.createElement("option");
+            opt.id = name;
+            opt.value = name;
+            opt.innerHTML = name;
+            functionName.appendChild(opt);
+        });
+    }
+
+    function createTextBox(id, initText) {
+        var funcText = document.createElement("textarea");
+        funcText.id = id;
+        funcText.style = 'width:100%;border:  1px solid black;';
+        funcText.rows = 12;
+        funcText.setAttribute('onblur', 'validateJSON("' + id + '")');
+        if (initText) {
+            funcText.value = initText;
+        }
+        return funcText;
+    }
+    function createDiv(id, label, style, domElementToChild) {
+        var currentDiv = document.createElement("div");
+        currentDiv.id = id;
+        if (label) {
+            currentDiv.appendChild(document.createTextNode(label));
+        }
+        if (style) {
+            currentDiv.style = style;
+        }
+        if (domElementToChild) {
+            currentDiv.appendChild(domElementToChild);
+        }
+        return currentDiv;
+    }
+    function validateJSON(id) {
+        var x = document.getElementById(id);
+        try {
+            var data = JSON.parse(x.value);
+            console.log(id + ' = ', data);
+            x.style = x.getAttribute('style').replace(/border.*;/, 'border:  1px solid black;');
+        }
+        catch (jsonParseError) {
+            console.error('error parsing json', x.value, jsonParseError);
+            x.style = x.getAttribute('style').replace(/border.*;/, 'border:  3px solid red;');
+        }
+    }
+    var padding = 'padding: 15px 15px 15px 15px;';
+    function loadScheme(schema) {
+        var currentDiv = createDiv('primerDiv', 'PRIMER', 'background-color: lightgrey;');
+        Object.keys(schema).forEach(function (service) {
+            var serviceDiv = createDiv(service, service, 'border:1px solid black;' + padding + 'background-color:grey;');
+            Object.keys(schema[service]).forEach(function (func) {
+                var funcDiv = createDiv('honeyBadgerDontCare', func, 'border:5px solid black;' + padding + 'background-color:darkgrey;');
+                funcDiv.appendChild(document.createElement("br"));
+                var funcData = schema[service][func];
+                funcDiv.appendChild(createTextBox(service + '.' + func, funcData ? JSON.stringify(funcData, null, 3) : '{}'));
+                serviceDiv.appendChild(funcDiv);
+            });
+            currentDiv.appendChild(serviceDiv);
+        });
+        document.body.appendChild(currentDiv);
+        document.body.appendChild(createDiv('world', 'All Data', 'border:10px solid black;' + padding + 'background-color:grey;', createTextBox('allData', '{}')))
+    }
+    function save() {
+        primerData = {};
+        Object.keys(schema).forEach(function (service) {
+            Object.keys(schema[service]).forEach(function (func) {
+                if (!primerData[service]) {
+                    primerData[service] = {};
+                }
+                primerData[service][func] = JSON.parse(document.getElementById(service + "." + func).value);
+            });
+        });
+        localStorage.setItem('primerData', JSON.stringify(primerData, null, 3));
+        document.getElementById('allData').value = JSON.stringify(primerData, null, 3);
+//    window.nsWebViewInterface.on('onDelete', function () {
+//      $scope.doDelete();
+//    });
+    }
+    function handleFileSelect(evt) {
+        console.log('loading file from filesystem..');
+        var reader = new FileReader();
+        // Closure to capture the file information.
+        reader.onload = (function (theFile) {
+            var fileData = atob(theFile.target.result.replace('data:application/json;base64,', ''));
+//      console.log('theFile', fileData);
+            primerData = JSON.parse(fileData);
+        });
+        reader.readAsDataURL(evt.target.files[0]);
+    }
+    document.getElementById('files').addEventListener('change', handleFileSelect, false);
+    loadSchemaFile();
+</script>
+</body>
+</html>
