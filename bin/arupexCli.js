@@ -16,7 +16,7 @@ if(process.argv[2]){
 
         case 'invoke':
 
-            let context = process.argv[5]?JSON.parse(require('fs').readFileSync(process.argv[5], 'utf8'):{};
+            let context = process.argv[5]?JSON.parse(require('fs').readFileSync(process.argv[5], 'utf8')):{};
             let event = JSON.parse(require('fs').readFileSync(process.argv[4], 'utf8'));
 
             arupex.interceptors.lambda[process.argv[3]](event, context, (err, data)=> {
