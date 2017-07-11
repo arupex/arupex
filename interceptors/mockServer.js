@@ -100,5 +100,3 @@ module.exports = function mockServer(port, opts) {
 
     server.listen(port || 1337);
 };
-
-module.exports();

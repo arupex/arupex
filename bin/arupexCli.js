@@ -15,7 +15,7 @@ if(process.argv[2]){
             break;
         case 'mock':
 
-            arupex.interceptors.mockServer.start(process.env.PORT || 1337, {
+            arupex.interceptors.mockServer(process.env.PORT || 1337, {
                 dir : process.cwd()
             });
             
