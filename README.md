@@ -20,6 +20,21 @@ It allows you to build a serverless application for your needs, but also allows 
  - Make Rest Documentation Automatic!
  - Making i18n such as sorting easier/faster
 
+
+####CLI
+    
+###### Run your lambda / server
+    arupex //will be deprecated 
+    use
+    arupex invoke event.json //location of event.json file 
+    arupex server 
+        
+###### Run Mock Server - gives you a test harness
+    arupex mock
+    
+###### Determine Mock Data Service Schema
+    arupex schema
+
 Check out our [Documentation](./demo/README.md) 
 
 Soon to be up on [arupex.com](http://arupex.com)
