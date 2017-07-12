@@ -63,14 +63,14 @@
                 let pretty = {};
                 if(typeof this.responseText === 'string'){
                     try{
-                        pretty = JSON.parse(this.responseText);
+                        pretty = JSON.stringify(JSON.parse(this.responseText), null, 3);
                     }
                     catch(e){
                         pretty = e;
                     }
                 }
                 else if(typeof this.responseText === 'object'){
-                    pretty = this.responseText;
+                    pretty = JSON.stringify(this.responseText, null, 3);
                 }
                 document.getElementById('output').value = pretty;
             }
