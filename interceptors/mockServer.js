@@ -25,12 +25,7 @@ module.exports = function mockServer(port, opts) {
         }
 
         if (req.url === '/primer_schema.json') {
-            let value = arupex.interceptors.lambdas({
-                meterFnc: () => {},
-                traceFnc: () => {},
-                dir: dir,
-                edge: true
-            });
+            let value = arupex.interceptors.lambdas(opts);
             delete value.mockGenerator.fncVarReplacements;
             return res.end(JSON.stringify({
                 schema : value.mockGenerator,
@@ -63,6 +58,8 @@ module.exports = function mockServer(port, opts) {
                     return body.mockData;//this is where ive decided to store my mock data when invoked, could be on headers or what ever you please!
                 }
             }, opts));
+
+            console.log('lambdas loaded', lambda);
 
             let lambda = lambdas.pipelines[body.functionName];
                 if(!body.event || !body.context){
