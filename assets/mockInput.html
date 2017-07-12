@@ -69,21 +69,11 @@
 
         var mockData = JSON.stringify(primerData);
 
-        var eventJson = JSON.stringify(event);
-        if(enableMocks){
-            eventJson = eventJson.replace(/mockDataReplace/g, mockData);
-        }
-
-        var contextJson = JSON.stringify(context);
-        if(enableMocks){
-            contextJson = contextJson.replace(/mockDataReplace/g, mockData);
-        }
-
-
         xhttp.send(JSON.stringify({
             functionName: functionName,
-            event: JSON.parse(eventJson),
-            context: JSON.parse(contextJson)
+            event: JSON.parse(event),
+            context: JSON.parse(context),
+            mockData : enableMocks?mockData:null
         }));
     }
 

@@ -17,7 +17,6 @@ module.exports = function mockServer(port, opts) {
         }
     }
 
-    let lambdas = require('./lambdas')(opts);
 
     const server = http.createServer((req, res) => {
 
@@ -59,7 +58,13 @@ module.exports = function mockServer(port, opts) {
                 reject(err);
             });
         }).then((body) => {
-                let lambda = lambdas.pipelines[body.functionName];
+            let lambdas = require('./lambdas')(Object.assign({
+                mockContext : function(event, context){
+                    return body.mockData;//this is where ive decided to store my mock data when invoked, could be on headers or what ever you please!
+                }
+            }, opts));
+
+            let lambda = lambdas.pipelines[body.functionName];
                 if(!body.event || !body.context){
                     res.statusCode = 400;
                     return res.end(JSON.stringify({
