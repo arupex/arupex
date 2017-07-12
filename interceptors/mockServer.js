@@ -59,7 +59,7 @@ module.exports = function mockServer(port, opts) {
                 }
             }, opts));
 
-            console.log('lambdas loaded', lambda);
+            console.log('lambdas loaded', lambdas);
 
             let lambda = lambdas.pipelines[body.functionName];
                 if(!body.event || !body.context){
