@@ -16,7 +16,7 @@ module.exports = function (opts) {
 
     let routes = opts.routes || [];
 
-    let activeEnvironment = (app.Environments || {})[process.env.ENVIRONMENT || 'dev'];
+    let activeEnvironment = (app.Environments || {})[opts.env || process.env.ENVIRONMENT || 'dev'];
     if (!activeEnvironment) {
         process.stderr.write('error no active environment to set the active environment set the ENVIRONMENT variable - default:dev\n');
     }
@@ -168,15 +168,40 @@ module.exports = function (opts) {
         }, {});
     };
 
+    function generatorReadyData(inputServices){
+        return Object.keys(inputServices).reduce((services, serviceName) => {
+            services[serviceName] = Object.keys(inputServices[serviceName]).reduce((service, funcName) => {
+                if(['restClient', 'init', 'interpolate', 'debug', 'initialized', 'fncVarReplacements'].indexOf(funcName) === -1){
+                    service[funcName] = inputServices[serviceName][funcName];
+                }
+                return service;
+            }, {});
+            return services;
+        }, {});
+    }
+
+    function generatorSchema(schema){
+        return lib.structured.toGenerator(schema);
+    }
+
+    function mockSchema(schema){
+        return lib.structured.toStructure(schema);
+    }
+
     //support for newer interceptor
     if(opts.edge){
+        let dataServiceSchema = generatorReadyData(injectableDataServices);
         return {
             functions : app.Functions,
             lambdasGenerator : generateExecutableLambdas,
             dataServices : injectableDataServices,
             swagger : swagger,
-            workers : workerInstances
-    };
+            workers : workerInstances,
+            mockGenerator : generatorSchema(dataServiceSchema),
+            mockSchema : mockSchema(dataServiceSchema),
+            mockContext : opts.mockContext==='function'?opts.mockContext.toString():null,
+            pipelines : generateExecutableLambdas(app.Functions)
+        };
     }
     else {
         return generateExecutableLambdas(app.Functions);
