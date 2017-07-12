@@ -16,7 +16,7 @@ module.exports = function (opts) {
 
     let routes = opts.routes || [];
 
-    let activeEnvironment = (app.Environments || {})[process.env.ENVIRONMENT || 'dev'];
+    let activeEnvironment = (app.Environments || {})[opts.env || process.env.ENVIRONMENT || 'dev'];
     if (!activeEnvironment) {
         process.stderr.write('error no active environment to set the active environment set the ENVIRONMENT variable - default:dev\n');
     }
