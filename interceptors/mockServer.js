@@ -25,8 +25,10 @@ module.exports = function mockServer(port, opts) {
         }
 
         if (req.url === '/primer_schema.json') {
-            let value = arupex.interceptors.lambdas(opts);
+            let value = arupex.interceptors.lambdas(Object.assign(opts, { edge : true }));
+
             delete value.mockGenerator.fncVarReplacements;
+
             return res.end(JSON.stringify({
                 schema : value.mockGenerator,
                 functionNames : Object.keys(value.functions)
