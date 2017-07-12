@@ -57,7 +57,7 @@ module.exports = function mockServer(port, opts) {
                 mockContext : function(event, context){
                     return body.mockData;//this is where ive decided to store my mock data when invoked, could be on headers or what ever you please!
                 }
-            }, opts));
+            }, opts, { edge : true }));//need edge
 
             console.log('lambdas loaded', lambdas);
 
