@@ -71,7 +71,9 @@ module.exports = function mockServer(port, opts) {
                 }
                 if (lambda) {
                     console.log('running', body.functionName);
-                    lambda(JSON.parse(body.event), JSON.parse(body.context), (err, data) => {
+                    let event = body.event;
+                    let context = body.context;
+                    lambda(event, context, (err, data) => {
                         if (typeof data !== 'string') {
                             data = JSON.stringify(data);
                         }
