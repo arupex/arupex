@@ -60,7 +60,19 @@
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState == 4 && this.status == 200) {
-                document.getElementById('output').value = this.responseText;
+                let pretty = {};
+                if(typeof this.responseText === 'string'){
+                    try{
+                        pretty = JSON.parse(this.responseText);
+                    }
+                    catch(e){
+                        pretty = e;
+                    }
+                }
+                else if(typeof this.responseText === 'object'){
+                    pretty = this.responseText;
+                }
+                document.getElementById('output').value = pretty;
             }
         };
         xhttp.open("POST", "/endpoint", true);
