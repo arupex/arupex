@@ -8,3 +8,4 @@ This Release includes all the major components in a working state, rigorous test
 
 ### 0.0.9 - Mock Updates - add mock server as a CLI command (arupex mock) allowing automatic generation of a test harness
 ### 0.0.10 - Tracer updates allowing tracer to trace into promises and values returned by traced functions! and other minor tweaks
+### 0.0.11 - CLI now has create methods for creating policies/responses/hooks/services/dataservices/utils/workers

@@ -117,7 +117,8 @@ module.exports = function (opts) {
                         logger: lib.logger,
                         swagger: swagger,
                         event: event,
-                        context: context
+                        context: context,
+                        environment : activeEnvironment
                     }, useableDataServices, injectables), injectees, opts.disableTracer ? null : metricTracer);
                 }
 

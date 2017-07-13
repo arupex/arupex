@@ -7,10 +7,15 @@ let port = process.env.PORT || 1337;
 let functionName = process.argv[3];
 let watch = process.argv.indexOf('watch') !== -1;
 let server = null;
+let appCreator = require('./appCreator');
+let logger = new arupex.lib.logger('CLI-Logger');
+
+function ignoreEmpty(value, label){
+    return (typeof value!=='undefined'?`${label?label:''} ${value}`:'');
+}
 
 function run() {
-    let context = process.argv[5] ? JSON.parse(fs.readFileSync(process.argv[5], 'utf8')) : {};
-    let event =  process.argv[4] ? JSON.parse(fs.readFileSync(process.argv[4], 'utf8')) : {};
+    let name = process.argv[4];
 
 
     if (cmd) {
@@ -25,9 +30,11 @@ function run() {
                 }).mockGenerator;
                 delete value.fncVarReplacements;
                 console.log('Mock Schema is as Follows: \n\n', JSON.stringify(value, null, 3));
-                break;
+                return;
 
             case 'invoke':
+                let event =  name ? JSON.parse(fs.readFileSync(name, 'utf8')) : {};
+                let context = process.argv[5] ? JSON.parse(fs.readFileSync(process.argv[5], 'utf8')) : {};
                 server = arupex.interceptors.lambda[functionName](event, context, (err, data) => {
                     if (err) {
                         console.log('err', err);
@@ -36,27 +43,69 @@ function run() {
                         console.log('Responded with', data);
                     }
                 });
-                break;
+                return;
 
             case 'server':
                 server = arupex.interceptors.http.start(port, {
                     dir: dir
                 });
-                break;
+                return;
             case 'mock':
                 server = arupex.interceptors.mockServer(port, {
-                    dir: dir
+                    dir: dir,
+                    meterFnc : function meterFinish(meter){
+                        logger.info('meter', meter);
+                    },
+                    traceFnc : function traceFinish(type, traceName, value, other, traceRoute){
+                        let padStr = '                        ';
+                        let idealPad = 28;
+                        logger.info('trace\t', type,
+                            '\t', traceName.padEnd(idealPad, padStr),
+                            '\t', ignoreEmpty(value).padEnd(idealPad, padStr),
+                            ignoreEmpty(other, 'was').padEnd(idealPad, padStr),
+                            '\t', traceRoute);
+                    },
                 });
-                break;
+                return;
 
-            default: //you entered an invalid arg 2
-                console.log(`USAGE:\n
+            case 'create':
+                let appNameOrSub = process.argv[3];
+                let packageName = process.argv[4];
+                console.log('cmd', appNameOrSub);
+                if(appNameOrSub) {
+                    switch (appNameOrSub.toLowerCase()) {
+                        case 'dataservice':
+                            return appCreator.createDataService(dir, packageName);
+                            case 'util':
+                        return appCreator.createDataServiceUtil(dir, packageName);
+                        case 'policy':
+                            return appCreator.createPolicy(dir, packageName);
+                        case 'service':
+                            return appCreator.createService(dir, packageName);
+                        case 'response':
+                            return appCreator.createResponse(dir, packageName);
+                        case 'function':
+                            return appCreator.createFunction(dir, packageName);
+                        case 'hook':
+                            return appCreator.createHook(dir, packageName);
+                        case 'worker':
+                            return appCreator.createWorker(dir, packageName);
+                        case 'app':
+                            return appCreator.createApp(dir, packageName);
+                        default:
+                        //create App
+                            return appCreator.createApp(dir, appNameOrSub);
+                    }
+                    return;
+                }
+        }
+        //you entered an invalid arg 2
+        console.log(`USAGE:\n
                 arupex schema                           # outputs the mock schema for your app
                 arupex invoke event.json context.json   # invokes your lambda via a parameterized event.json and an optional context json
                 arupex server                           # runs your lambdas as a server on port 1337 based on your routes.js file
                 arupex mock                             # runs a mock server for your lambda with a harness page at localhost:1337
             `);
-        }
     }
     else {
         server = arupex.interceptors.http.start(port, {
