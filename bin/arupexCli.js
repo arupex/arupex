@@ -73,7 +73,10 @@ if(watch){
     }, (evt, file) => {
         console.log('saw file change', file);
         if(server && typeof server.close === 'function'){
-            server.close(run);
+            server.close(() => {
+                require.cache = {};//remove data from requires cache as it will just reload old files if we dont
+                run();
+            });
         }
         else {
             console.log('server is not running');
