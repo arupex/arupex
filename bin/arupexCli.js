@@ -9,8 +9,9 @@ let watch = process.argv.indexOf('watch') !== -1;
 let server = null;
 
 function run() {
-    let context = process.argv[5] ? JSON.parse(require('fs').readFileSync(process.argv[5], 'utf8')) : {};
-    let event = JSON.parse(require('fs').readFileSync(process.argv[4], 'utf8'));
+    let context = process.argv[5] ? JSON.parse(fs.readFileSync(process.argv[5], 'utf8')) : {};
+    let event =  process.argv[4] ? JSON.parse(fs.readFileSync(process.argv[4], 'utf8')) : {};
+
 
     if (cmd) {
 
