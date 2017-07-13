@@ -40,8 +40,8 @@
 
 <div id="outputBlock" style="border: 1px solid black; padding: 15px; background-color: grey;">
     Output
-        <textarea id="output" rows="12" style="width: 100%; border: 1px solid black;"></textarea>
-    </div>
+    <textarea id="output" rows="12" style="width: 100%; border: 1px solid black;"></textarea>
+</div>
 </div>
 
 
@@ -61,18 +61,23 @@
         xhttp.onreadystatechange = function () {
             if (this.readyState == 4 && this.status == 200) {
                 let pretty = {};
-                if(typeof this.responseText === 'string'){
-                    try{
+                if (typeof this.responseText === 'string') {
+                    try {
                         pretty = JSON.stringify(JSON.parse(this.responseText), null, 3);
                     }
-                    catch(e){
+                    catch (e) {
                         pretty = e;
                     }
                 }
-                else if(typeof this.responseText === 'object'){
+                else if (typeof this.responseText === 'object') {
                     pretty = JSON.stringify(this.responseText, null, 3);
                 }
-                document.getElementById('output').value = pretty;
+                var outputEl = document.getElementById('output');
+                outputEl.value = pretty;
+                outputEl.style.cssText = 'height:auto; padding:0';
+                // for box-sizing other than "content-box" use:
+                // el.style.cssText = '-moz-box-sizing:content-box';
+                outputEl.style.cssText = 'height:' + el.scrollHeight + 'px';
             }
         };
         xhttp.open("POST", "/endpoint", true);
@@ -85,7 +90,7 @@
             functionName: functionName,
             event: JSON.parse(event),
             context: JSON.parse(context),
-            mockData : enableMocks?mockData:null
+            mockData: enableMocks ? mockData : null
         }));
     }
 
