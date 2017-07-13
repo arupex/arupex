@@ -12,9 +12,8 @@ module.exports = (function () {
         fs.mkdirSync(`${path}/${dirName}`);
     }
 
-    let dir = process.cwd();
 
-    function createApp(name) {
+    function createApp(dir, name) {
         let appJS = `'use strict';
             let arupex = require('arupex');
             let logger = new arupex.lib.logger('${name}');
@@ -54,7 +53,7 @@ module.exports = (function () {
         createFile(appsDir, 'app.js', appJS);
 
         //services/hooks/utils/etc
-        createDir(dir, `DataServices`);
+        createDir(appsDir, `DataServices`);
         createDataService(appsDir, name);
 
         createDir(appsDir, `DataServiceUtils`);

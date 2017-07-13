@@ -15,9 +15,7 @@ function ignoreEmpty(value, label){
 }
 
 function run() {
-    let context = process.argv[5] ? JSON.parse(fs.readFileSync(process.argv[5], 'utf8')) : {};
     let name = process.argv[4];
-    let event =  name ? JSON.parse(fs.readFileSync(name, 'utf8')) : {};
 
 
     if (cmd) {
@@ -35,6 +33,8 @@ function run() {
                 return;
 
             case 'invoke':
+                let event =  name ? JSON.parse(fs.readFileSync(name, 'utf8')) : {};
+                let context = process.argv[5] ? JSON.parse(fs.readFileSync(process.argv[5], 'utf8')) : {};
                 server = arupex.interceptors.lambda[functionName](event, context, (err, data) => {
                     if (err) {
                         console.log('err', err);
@@ -70,26 +70,28 @@ function run() {
 
             case 'create':
                 let appNameOrSub = process.argv[3];
-                if(name) {
+                let packageName = process.argv[4];
+                console.log('cmd', appNameOrSub);
+                if(appNameOrSub) {
                     switch (appNameOrSub.toLowerCase()) {
                         case 'dataservice':
-                            return appCreator.createDataService(dir, name);
+                            return appCreator.createDataService(dir, packageName);
                             case 'util':
-                        return appCreator.createDataServiceUtil(dir, name);
+                        return appCreator.createDataServiceUtil(dir, packageName);
                         case 'policy':
-                            return appCreator.createPolicy(dir, name);
+                            return appCreator.createPolicy(dir, packageName);
                         case 'service':
-                            return appCreator.createService(dir, name);
+                            return appCreator.createService(dir, packageName);
                         case 'response':
-                            return appCreator.createResponse(dir, name);
+                            return appCreator.createResponse(dir, packageName);
                         case 'function':
-                            return appCreator.createFunction(dir, name);
+                            return appCreator.createFunction(dir, packageName);
                         case 'hook':
-                            return appCreator.createHook(dir, name);
+                            return appCreator.createHook(dir, packageName);
                         case 'worker':
-                            return appCreator.createWorker(dir, name);
+                            return appCreator.createWorker(dir, packageName);
                         case 'app':
-                            return appCreator.createApp(dir, name);
+                            return appCreator.createApp(dir, packageName);
                         default:
                         //create App
                             return appCreator.createApp(dir, appNameOrSub);
