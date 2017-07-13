@@ -70,12 +70,13 @@ run();
 if(watch){
     fs.watch(dir, {
         recursive: true
-    }, () => {
+    }, (evt, file) => {
+        console.log('saw file change', file);
         if(server && typeof server.close === 'function'){
             server.close(run);
         }
         else {
-            run();
+            console.log('server is not running');
         }
     });
 }
