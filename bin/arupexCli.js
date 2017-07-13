@@ -8,7 +8,7 @@ let functionName = process.argv[3];
 let watch = process.argv.indexOf('watch') !== -1;
 let server = null;
 let appCreator = require('./appCreator');
-let logger = arupex.lib.logger('CLI-Logger');
+let logger = new arupex.lib.logger('CLI-Logger');
 
 function ignoreEmpty(value, label){
     return (typeof value!=='undefined'?`${label?label:''} ${value}`:'');
