@@ -74,7 +74,9 @@ if(watch){
         console.log('saw file change', file);
         if(server && typeof server.close === 'function'){
             server.close(() => {
-                require.cache = {};//remove data from requires cache as it will just reload old files if we dont
+                Object.keys(require.cache).forEach((key) => {
+                    delete require.cache[key];
+                });//remove data from requires cache as it will just reload old files if we dont
                 run();
             });
         }
