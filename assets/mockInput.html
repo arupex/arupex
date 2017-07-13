@@ -40,7 +40,7 @@
 
 <div id="outputBlock" style="border: 1px solid black; padding: 15px; background-color: grey;">
     Output
-    <textarea id="output" rows="12" style="width: 100%; border: 1px solid black;"></textarea>
+    <textarea id="output" style="width: 100%; border: 1px solid black;"></textarea>
 </div>
 </div>
 
@@ -74,10 +74,10 @@
                 }
                 var outputEl = document.getElementById('output');
                 outputEl.value = pretty;
-                outputEl.style.cssText = 'height:auto; padding:0';
+                outputEl.style.cssText = 'height:auto; padding:0; width: 100%; border: 1px solid black;';
                 // for box-sizing other than "content-box" use:
                 // el.style.cssText = '-moz-box-sizing:content-box';
-                outputEl.style.cssText = 'height:' + el.scrollHeight + 'px';
+                outputEl.style.cssText = 'height:' + outputEl.scrollHeight + 'px; width: 100%; border: 1px solid black;';
             }
         };
         xhttp.open("POST", "/endpoint", true);
@@ -118,6 +118,10 @@
                 var result = JSON.parse(this.responseText);
                 loadFunctions(result.functionNames);
                 schema = result.schema;
+
+
+                document.getElementById('event').value = JSON.stringify(result.sampleEvent, null, 3);
+
                 loadScheme(schema);
             }
         };
