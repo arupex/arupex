@@ -1,4 +1,4 @@
-#arupex
+# arupex
 Arupex is a Serverless/Server framework for NodeJS
 It allows you to build a serverless application for your needs, but also allows you to wrap that with a http server if need be
 
@@ -10,7 +10,7 @@ It allows you to build a serverless application for your needs, but also allows 
 [![Donate](https://img.shields.io/badge/Donate-Arupex-green.svg)](https://pledgie.com/campaigns/31873)
 ![lifetimeDownloadCount](https://img.shields.io/npm/dt/arupex.svg?maxAge=2592000)
 
-##Goals
+## Goals
  - Minimizing Boilerplate work
  - Making Testing easier on Developers
  - Making Writing Mocks a thing of the past
@@ -21,7 +21,7 @@ It allows you to build a serverless application for your needs, but also allows 
  - Making i18n such as sorting easier/faster
 
 
-####CLI
+#### CLI
     
 ###### Run your lambda / server
     arupex //will be deprecated 
