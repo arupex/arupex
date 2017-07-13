@@ -78,15 +78,15 @@ module.exports = (function () {
     }
 
     function createDataService(appsDir , name) {
-        createFile(`${appsDir}/DataServices`, `${name}.js`, `module.exports = [\n]`);
+        createFile(`${appsDir}/DataServices`, `${name}DataService.js`, `module.exports = [\n{ endpoint1 : '' }\n,\n{ endpoint2 : '' }\n]`);
     }
 
     function createDataServiceUtil(appsDir, name) {
-        createFile(`${appsDir}/DataServiceUtils`,  `${name}DataService.js`, `module.exports = function(event, content) { \n };`);
+        createFile(`${appsDir}/DataServiceUtils`,  `${name}DataServiceUtil.js`, `module.exports = function(${name}DataService) { \n    return {\n   };\n};`);
     }
 
     function createPolicy(appsDir, name) {
-        createFile(`${appsDir}/Policies`,  `${name}.js`, `module.exports = function(event, content) { \n };`);
+        createFile(`${appsDir}/Policies`,  `${name}.js`, `module.exports = function(event, context, next, res) { \n };`);
     }
 
     function createResponse(appsDir, name) {
@@ -94,11 +94,11 @@ module.exports = (function () {
     }
 
     function createService(appsDir, name) {
-        createFile(`${appsDir}/Services`,  `${name}Service.js`, `module.exports = function(${name}DataService) { \n };`);
+        createFile(`${appsDir}/Services`,  `${name}Service.js`, `module.exports = function(${name}DataService) { \n    return {\n   };\n};`);
     }
 
     function createHook(appsDir, name) {
-        createFile(`${appsDir}/Hooks`,  `${name}Hook.js`, `module.exports = function(event, content){ \n  };`);
+        createFile(`${appsDir}/Hooks`,  `${name}Hook.js`, `module.exports = function(event, content) { \n    return {\n   };\n};`);
     }
 
     function createFunction(appsDir, name) {
@@ -106,7 +106,7 @@ module.exports = (function () {
     }
 
     function createWorker(appsDir, name) {
-        createFile(`${appsDir}/Workers`,  `${name}Worker.js`, `module.exports = function(){ \n };`);
+        createFile(`${appsDir}/Workers`,  `${name}Worker.js`, `module.exports = function(){ \n };\nmodule.exports.interval = 6000;`);
     }
 
     return {

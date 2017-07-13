@@ -8,6 +8,11 @@ let functionName = process.argv[3];
 let watch = process.argv.indexOf('watch') !== -1;
 let server = null;
 let appCreator = require('./appCreator');
+let logger = arupex.lib.logger('CLI-Logger');
+
+function ignoreEmpty(value, label){
+    return (typeof value!=='undefined'?`${label?label:''} ${value}`:'');
+}
 
 function run() {
     let context = process.argv[5] ? JSON.parse(fs.readFileSync(process.argv[5], 'utf8')) : {};
@@ -49,11 +54,17 @@ function run() {
                 server = arupex.interceptors.mockServer(port, {
                     dir: dir,
                     meterFnc : function meterFinish(meter){
-                        console.log('meter', meter);
+                        logger.info('meter', meter);
                     },
                     traceFnc : function traceFinish(type, traceName, value, other, traceRoute){
-                        console.log('trace', type, traceName, value, other, traceRoute);
-                    }
+                        let padStr = '                        ';
+                        let idealPad = 28;
+                        logger.info('trace\t', type,
+                            '\t', traceName.padEnd(idealPad, padStr),
+                            '\t', ignoreEmpty(value).padEnd(idealPad, padStr),
+                            ignoreEmpty(other, 'was').padEnd(idealPad, padStr),
+                            '\t', traceRoute);
+                    },
                 });
                 return;
 
