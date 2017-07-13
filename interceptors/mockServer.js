@@ -1,7 +1,7 @@
 /**
  * Created by daniel.irwin on 7/11/17.
  */
-module.exports = function mockServer(port, opts) {
+module.exports = function mockServer(port, opts, mockOpts) {
     const arupex = require('../arupex');
     const http = require('http');
     const fs = require('fs');
@@ -17,6 +17,11 @@ module.exports = function mockServer(port, opts) {
         }
     }
 
+    if(!mockOpts){
+        mockOpts = {
+            sampleEvent : {}
+        };
+    }
 
     const server = http.createServer((req, res) => {
 
@@ -31,7 +36,8 @@ module.exports = function mockServer(port, opts) {
 
             return res.end(JSON.stringify({
                 schema : value.mockGenerator,
-                functionNames : Object.keys(value.functions)
+                functionNames : Object.keys(value.functions),
+                sampleEvent : mockOpts.sampleEvent
             }, null, 3));
         }
 

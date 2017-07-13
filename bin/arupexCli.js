@@ -13,7 +13,14 @@ let logger = new arupex.lib.logger('CLI-Logger');
 function ignoreEmpty(value, label){
     return (typeof value!=='undefined'?`${label?label:''} ${value}`:'');
 }
-
+function sampleEvent(dir){
+    try {
+        return JSON.parse(fs.readFileSync(`${dir}/event.json`, 'utf8'));
+    }
+    catch(e){
+        return {};
+    }
+}
 function run() {
     let name = process.argv[4];
 
@@ -51,6 +58,7 @@ function run() {
                 });
                 return;
             case 'mock':
+                console.log(`Running Mock Server on port : ${port}`);
                 server = arupex.interceptors.mockServer(port, {
                     dir: dir,
                     meterFnc : function meterFinish(meter){
@@ -65,7 +73,7 @@ function run() {
                             ignoreEmpty(other, 'was').padEnd(idealPad, padStr),
                             '\t', traceRoute);
                     },
-                });
+                }, { sampleEvent : sampleEvent(dir)});
                 return;
 
             case 'create':
