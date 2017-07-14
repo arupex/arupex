@@ -160,7 +160,8 @@ module.exports = function (opts) {
                         i18n: lib.i18n,
                         env: activeEnvironment,
                         tracer: lib.tracer,
-                        meter: lib.meter
+                        meter: lib.meter,
+                        environment: activeEnvironment
                     }, callback);
                 });
             };
