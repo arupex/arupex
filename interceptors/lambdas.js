@@ -3,6 +3,8 @@
  */
 module.exports = function (opts) {
 
+
+
     const DEFAULT_WORKER_INTERVAL = 60 * 1000;//every minute
 
     let directoryLoader = require('../lib/multiDirLoader');
@@ -109,6 +111,10 @@ module.exports = function (opts) {
             }
 
             acc[lambdaName] = function (event, context, callback) {
+
+                if(typeof context === 'object' && !opts.callbackWaitsForEmptyEventLoop){
+                    context.callbackWaitsForEmptyEventLoop = false;//so aws does not keep running lambda after callback
+                }
 
                 //init responses with the ability to inject the callback and on the fly inject the 'data' param
                 let injectableResponse = initResponses({callback: callback}, app.Responses || {});

@@ -2,7 +2,7 @@
  * Created by daniel.irwin on 5/22/17.
  */
 
-let loadDirectories = require(__dirname + '/lib/requireDirectory').requireDirSync;
+let loadDirectories = require(__dirname + '/lib/multiDirLoader');
 
 function ignoreBin(filename){
     return filename.indexOf('bin') === -1 &&
