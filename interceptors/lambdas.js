@@ -3,6 +3,16 @@
  */
 module.exports = function (opts) {
 
+    process.on('uncaughtexception', (e) => {
+        console.log('', e);
+    });
+
+    process.on('uncaughtexception', (e) => {
+        console.log('', e);
+    });
+
+    console.log('opts', opts);
+
     const DEFAULT_WORKER_INTERVAL = 60 * 1000;//every minute
 
     let directoryLoader = require('../lib/multiDirLoader');
