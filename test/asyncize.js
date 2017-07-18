@@ -60,4 +60,88 @@ describe('asyncize', function(){
 
     });
 
+
+    it('test ability to pass in opts object callbacks', (done) => {
+        asyncize.conform('data')({}, function() {
+            done();
+        }, function(){
+
+        });
+    });
+
+
+    it('test ability to pass in opts object promise', (done) => {
+        asyncize.conform('data')({}).then(function() {
+            done();
+        }, function(){
+
+        });
+    });
+
+
+    it('test ability to pass in opts object callback fail', (done) => {
+        asyncize.conform(null, 'error')({}, function() {
+            done(new Error('called success when should have failed'));
+        }, function(){
+            done();
+        });
+    });
+
+
+    it('test ability to pass in opts object promise fail', (done) => {
+        asyncize.conform(null, 'error')({}).then(function() {
+
+        }, function(){
+            done();
+        });
+    });
+
+
+
+//QUERY
+
+
+    it('test ability to pass in opts object callback query', (done) => {
+        asyncize.conform(null, 'error', {'qu': 'data'})('qu', function(data) {
+            if(data === 'data'){
+                done();
+            }
+        }, function(){
+
+        });
+    });
+
+
+    it('test ability to pass in opts object promise query', (done) => {
+        asyncize.conform(null, 'error', {'qu':'data'})('qu').then(function(data) {
+            if(data === 'data'){
+                done();
+            }
+        }, function(){
+
+        });
+    });
+
+
+
+
+
+
+    it('test ability to pass in opts object callback query fail', (done) => {
+        asyncize.conform(null, 'error', {})({}, function() {
+
+        }, function(){
+            done();
+        });
+    });
+
+
+    it('test ability to pass in opts object promise query fail', (done) => {
+        asyncize.conform(null, 'error', {})({}).then(function() {
+
+        }, function(){
+            done();
+        });
+    });
+
 });
