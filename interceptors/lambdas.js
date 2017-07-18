@@ -7,7 +7,13 @@ module.exports = function (opts) {
 
     let directoryLoader = require('../lib/multiDirLoader');
 
-    let dirFilter = opts.fileFilter || function(a) {return (a.indexOf('app.js') === -1 && a.indexOf('node_modules') === -1)};
+    let dirFilter = opts.fileFilter || function(a) {
+        return a.indexOf('app.js') === -1 &&
+            a.indexOf('node_modules') === -1 &&
+            a.indexOf('demo') === -1 &&
+            a.indexOf('tmp') === -1 &&
+            a.indexOf('bin') === -1
+    };
 
     let dir = opts.dir || process.cwd();
 
