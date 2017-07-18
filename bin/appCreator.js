@@ -3,7 +3,8 @@
  */
 module.exports = (function () {
     let fs = require('fs');
-
+    let spawn = require('child_process');
+    let arupexPackage = require('../package.json');
     function createFile(folder, filename, content) {
         try {
             fs.writeFileSync(`${folder}/${filename}`, content, 'utf8');
@@ -64,6 +65,24 @@ exports.handler = interceptors.lambdas({
         createDir(dir, name);
         let appsDir = `${dir}/${name}`;
         createFile(appsDir, 'app.js', appJS);
+        let hyperRequestVersion = arupexPackage.dependencies['hyper-request'];
+        createFile(`${appsDir}`, 'package.json', `{
+  "name": "${name}",
+  "version": "0.0.1",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "./node_modules/arupex/bin/arupexCli.js mock"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "hyper-request": "${hyperRequestVersion}",
+    "arupex" : "${arupexPackage.version}"
+  },
+  "devDependencies": {}
+}
+`);
 
         //services/hooks/utils/etc
         createDir(appsDir, `DataServices`);
@@ -86,6 +105,17 @@ exports.handler = interceptors.lambdas({
 
         createDir(appsDir, `Services`);
         createService(appsDir, name);
+
+        createDir(appsDir, `Policies`);
+        createPolicy(appsDir, name);
+
+        createDir(appsDir, `Workers`);
+        createWorker(appsDir, name);
+
+        console.log('running npm install');
+        spawn.spawnSync('npm', ['install'], {
+            cwd : appsDir
+        });
 
     }
 

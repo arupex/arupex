@@ -10,6 +10,9 @@ It allows you to build a serverless application for your needs, but also allows 
 [![Donate](https://img.shields.io/badge/Donate-Arupex-green.svg)](https://pledgie.com/campaigns/31873)
 ![lifetimeDownloadCount](https://img.shields.io/npm/dt/arupex.svg?maxAge=2592000)
 
+
+Check out our [Documentation](./demo/README.md)  
+
 ## Goals
  - Minimizing Boilerplate work
  - Making Testing easier on Developers
@@ -20,6 +23,35 @@ It allows you to build a serverless application for your needs, but also allows 
  - Make Rest Documentation Automatic!
  - Making i18n such as sorting easier/faster
 
+# Project Folder Structure
+    ├── DataServiceUtils
+    │   └── DataServiceUtil.js
+    ├── DataServices
+    │   └── DataService.js
+    ├── Environments
+    │   └── dev.js
+    ├── Functions
+    │   └── helloworld.js
+    ├── Hooks
+    │   └── Cookies.js
+    │   └── Headers.js
+    │   └── Params.js
+    ├── Responses
+    │   └── ok.js
+    │   └── critical.js
+    │   └── badRequest.js
+    ├── Services
+    │   └── Service.js
+    ├── Workers
+    │   └── DailyJob.js
+    │   └── NightlyJob.js
+    ├── Policies
+    │   └── auth.js
+    │   └── paramCheck.js
+    ├── app.js
+    ├── node_modules
+    |    ...
+    └── package.json
 
 #### CLI
     
@@ -46,6 +78,5 @@ It allows you to build a serverless application for your needs, but also allows 
 ###### Determine Mock Data Service Schema
     arupex schema
 
-Check out our [Documentation](./demo/README.md) 
 
 Soon to be up on [arupex.com](http://arupex.com)
