@@ -2,7 +2,7 @@
  * Created by daniel.irwin on 6/17/17.
  */
 
-let arupex = require('arupex');
+let arupex = require('../arupex'||'arupex');
 let logger = new arupex.lib.logger('Demo');
 
 let interceptors = arupex.interceptors;
