@@ -219,6 +219,9 @@ console.log('injecting hooks');
     }
 
     //support for newer interceptor
+    let functionPipelines = generateExecutableLambdas(app.Functions);
+    console.log('function pipelines', functionPipelines);
+
     if(opts.edge){
         let dataServiceSchema = generatorReadyData(injectableDataServices);
         return {
@@ -230,12 +233,12 @@ console.log('injecting hooks');
             mockGenerator : generatorSchema(dataServiceSchema),
             mockSchema : mockSchema(dataServiceSchema),
             mockContext : opts.mockContext==='function'?opts.mockContext.toString():null,
-            pipelines : generateExecutableLambdas(app.Functions)
+            pipelines : functionPipelines
         };
     }
     else {
         console.log('generateExecutableLambdas');
-        return generateExecutableLambdas(app.Functions);
+        return functionPipelines;
     }
 
 };
