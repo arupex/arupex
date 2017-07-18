@@ -3,15 +3,7 @@
  */
 module.exports = function (opts) {
 
-    process.on('uncaughtexception', (e) => {
-        console.log('', e);
-    });
 
-    process.on('uncaughtexception', (e) => {
-        console.log('', e);
-    });
-
-    console.log('opts', opts);
 
     const DEFAULT_WORKER_INTERVAL = 60 * 1000;//every minute
 
@@ -37,13 +29,9 @@ module.exports = function (opts) {
         process.stderr.write('error no active environment to set the active environment set the ENVIRONMENT variable - default:dev\n');
     }
 
-    console.log('active env', activeEnvironment);
-
     let injectableDataServices = {};
 
     let swagger = lib.docGenerator.generateFromUrls(Object.keys(routes), routes.headers);
-
-    console.log('swagger', swagger);
 
     function calculateInjectableDataServices(nonInjectableServices) {
         if (nonInjectableServices) {
@@ -64,8 +52,6 @@ module.exports = function (opts) {
     }
 
     injectableDataServices = calculateInjectableDataServices(app.DataServices);
-
-    console.log('i data services', injectableDataServices);
 
     let policiesArray = Object.keys(app.Policies || {}).reduce((acc, v) => {
         acc.push(app.Policies[v]);
@@ -113,12 +99,8 @@ module.exports = function (opts) {
         return useableDataServices;
     }
 
-
-
     let generateExecutableLambdas = function (functions) {
         return Object.keys(functions || {}).reduce((acc, lambdaName) => {
-
-
 
             //add the active function to the tail end of the middlware array
             let middleware = policiesArray.concat(functions[lambdaName]);
@@ -128,8 +110,11 @@ module.exports = function (opts) {
                 middleware = middleware.sort(opts.orderMiddleware);
             }
 
-            console.log('generating func', lambdaName);
             acc[lambdaName] = function (event, context, callback) {
+
+                if(typeof context === 'object' && !opts.callbackWaitsForEmptyEventLoop){
+                    context.callbackWaitsForEmptyEventLoop = false;//so aws does not keep running lambda after callback
+                }
 
                 //init responses with the ability to inject the callback and on the fly inject the 'data' param
                 let injectableResponse = initResponses({callback: callback}, app.Responses || {});
@@ -156,31 +141,30 @@ module.exports = function (opts) {
 
                 //give hooks event,context, etc injectables
                 let useableHooks = injectWrapper({}, app.Hooks);
-console.log('injecting hooks');
+
                 let injectables = Object.assign({}, injectableResponse, useableHooks);
 
                 //give data services event,context injectables as well as hooks
                 useableDataServices = injectWrapper(injectables, useableDataServices);//allow dataservices to have event or context injected within
-                console.log('injecting dataservices');
+
                 injectables = Object.assign(injectables, useableDataServices);
 
                 //allow someone who can be called by Services that also has access to dataservices for convenience
                 let useableDataServiceUtils = injectWrapper(injectables, app.DataServiceUtils || {});
-                console.log('injecting dataserviceutils');
+
                 injectables = Object.assign(injectables, useableDataServiceUtils);
 
                 let instantiatedServices = injectWrapper(injectables, app.Services);
-                console.log('injecting services');
+
                 injectables = Object.assign(injectables, instantiatedServices);
 
                 //generate middlware from custom middlware with injectables ( responses, dataServices, services )
                 let injectableMiddlware = injectWrapper(injectables, middleware);
-                console.log('injecting middleware');
+
                 //create pipeline!
                 lib.pipeline({
                     timeout: false
                 }, injectableMiddlware)(context, injectableResponse, (event, context) => {
-                    console.log('pipeline execution');
                     injector({
                         event: event,
                         context: context,
@@ -219,9 +203,6 @@ console.log('injecting hooks');
     }
 
     //support for newer interceptor
-    let functionPipelines = generateExecutableLambdas(app.Functions);
-    console.log('function pipelines', functionPipelines);
-
     if(opts.edge){
         let dataServiceSchema = generatorReadyData(injectableDataServices);
         return {
@@ -233,12 +214,11 @@ console.log('injecting hooks');
             mockGenerator : generatorSchema(dataServiceSchema),
             mockSchema : mockSchema(dataServiceSchema),
             mockContext : opts.mockContext==='function'?opts.mockContext.toString():null,
-            pipelines : functionPipelines
+            pipelines : generateExecutableLambdas(app.Functions)
         };
     }
     else {
-        console.log('generateExecutableLambdas');
-        return functionPipelines;
+        return generateExecutableLambdas(app.Functions);
     }
 
 };
