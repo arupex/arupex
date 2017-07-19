@@ -65,12 +65,10 @@ function run() {
                         logger.info('meter', meter);
                     },
                     traceFnc : function traceFinish(type, traceName, value, other, traceRoute){
-                        let padStr = '                        ';
-                        let idealPad = 28;
                         logger.info('trace\t', type,
-                            '\t', traceName.padEnd(idealPad, padStr),
-                            '\t', ignoreEmpty(value).padEnd(idealPad, padStr),
-                            ignoreEmpty(other, 'was').padEnd(idealPad, padStr),
+                            '\t', traceName,
+                            '\t', ignoreEmpty(value),
+                            ignoreEmpty(other, 'was'),
                             '\t', traceRoute);
                     },
                 }, { sampleEvent : sampleEvent(dir)});
