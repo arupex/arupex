@@ -8,7 +8,7 @@ It allows you to build a serverless application for your needs, but also allows 
 [![dependencies](https://david-dm.org/arupex/areupex.svg)](http://github.com/arupex/arupex)
 ![Build Status](https://api.travis-ci.org/arupex/arupex.svg?branch=master) 
 [![Donate](https://img.shields.io/badge/Donate-Arupex-green.svg)](https://pledgie.com/campaigns/31873)
-![lifetimeDownloadCount](https://img.shields.io/npm/dt/arupex.svg?maxAge=2592000)
+![lifetimeDownloadCount](https://img.shields.io/npm/dt/arupex.svg?maxAge=25920000)
 
 
 Check out our [Documentation](./demo/README.md)  

@@ -20,7 +20,7 @@ module.exports = function (opts) {
     let dir = opts.dir || process.cwd();
 
     let lib = directoryLoader(`${__dirname}/../lib/`, dirFilter);
-    let app = directoryLoader(`${dir}/`, dirFilter);
+    let app = opts.app || directoryLoader(`${dir}/`, dirFilter);//allow client to pass in own app structure
 
     let routes = opts.routes || [];
 
@@ -73,7 +73,7 @@ module.exports = function (opts) {
     //Workers are agnostic of lambda endpoints
     let workerInstances = {};
 
-    if (app.Workers) {
+    if (typeof app.Workers === 'object') {
         Object.keys(app.Workers).forEach(worker => {
             if (typeof app.Workers[worker] === 'function') {
                 workerInstances[worker] = setInterval(function () {
@@ -117,7 +117,7 @@ module.exports = function (opts) {
                 }
 
                 //init responses with the ability to inject the callback and on the fly inject the 'data' param
-                let injectableResponse = initResponses({callback: callback}, app.Responses || {});
+                let injectableResponse = initResponses({callback: callback, event : event, context : context}, app.Responses || {});
                 let useableDataServices = injectableDataServices;
 
                 function injectWrapper(injectables, injectees) {
