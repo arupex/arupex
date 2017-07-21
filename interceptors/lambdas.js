@@ -22,11 +22,42 @@ module.exports = function (opts) {
     let lib = directoryLoader(`${__dirname}/../lib/`, dirFilter);
     let app = opts.app || directoryLoader(`${dir}/`, dirFilter);//allow client to pass in own app structure
 
+    /**
+     * if an injectable by a name is missing prepopulate it with an empty object
+     * @param names
+     */
+    function fixInjectable(names) {
+        names.forEach( (name) => {
+            if (typeof app[name] !== 'object') {
+                app[name] = {};
+            }
+        })
+    }
+
+    //Pre pop all parts if missing
+    if (typeof app === 'object' && typeof app.Functions !== 'object'){//if you have no 'lambda' functions your going to have a bad time
+        fixInjectable([
+            'DataServices',
+            'DataServiceUtils',
+            'Environments',
+            'Hooks',
+            'Policies',
+            'Responses',
+            'Services',
+            'Workers'
+        ]);
+    }
+    else {
+        //panic
+        process.exit(1);
+    }
+
     let routes = opts.routes || [];
 
     let activeEnvironment = (app.Environments || {})[opts.env || process.env.ENVIRONMENT || 'dev'];
-    if (!activeEnvironment) {
+    if (typeof activeEnvironment !== 'object') {
         process.stderr.write('error no active environment to set the active environment set the ENVIRONMENT variable - default:dev\n');
+        activeEnvironment = {};//fix it sort of ?
     }
 
     let injectableDataServices = {};
@@ -90,6 +121,13 @@ module.exports = function (opts) {
     }
 
     function runtimeMockDataServices(useableDataServices, mockContext) {
+        if(typeof useableDataServices !== 'object'){
+            return {};
+        }
+        if(typeof mockContext !== 'object'){
+            return useableDataServices;
+        }
+
         useableDataServices = lib.structured.toImplentation(mockContext);
         Object.keys(injectableDataServices).forEach((serviceName) => {
             if (typeof injectableDataServices[serviceName].overrideable === 'boolean' && !injectableDataServices[serviceName].overrideable) {//if false but not falsey
@@ -106,7 +144,7 @@ module.exports = function (opts) {
             let middleware = policiesArray.concat(functions[lambdaName]);
 
             //allow you to specify the order of your middleware
-            if (opts.orderMiddleware) {
+            if (typeof opts.orderMiddleware === 'function') {
                 middleware = middleware.sort(opts.orderMiddleware);
             }
 
