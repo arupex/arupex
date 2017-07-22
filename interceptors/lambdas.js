@@ -50,7 +50,7 @@ module.exports = function (opts) {
 
     let activeEnvironment = (app.Environments || {})[opts.env || process.env.ENVIRONMENT || 'dev'];
     if (typeof activeEnvironment !== 'object') {
-        process.stderr.write('error no active environment to set the active environment set the ENVIRONMENT variable - default:dev\n');
+        logger.warn('error no active environment to set the active environment set the ENVIRONMENT variable - default:dev\n');
         activeEnvironment = {};//fix it sort of ?
     }
 
