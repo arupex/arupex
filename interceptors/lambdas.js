@@ -3,13 +3,12 @@
  */
 module.exports = function (opts) {
 
-
-
-    const DEFAULT_WORKER_INTERVAL = 60 * 1000;//every minute
+    let loggerFactory = require('../lib/logger', { level : (opts.logLevel||'warn') });
+    let logger = new loggerFactory('Lambda-Interceptor');
 
     let directoryLoader = require('../lib/multiDirLoader');
 
-    let dirFilter = opts.fileFilter || function(a) {
+    let dirFilter = opts.fileFilter || function (a) {
         return a.indexOf('app.js') === -1 &&
             a.indexOf('node_modules') === -1 &&
             a.indexOf('demo') === -1 &&
@@ -17,42 +16,37 @@ module.exports = function (opts) {
             a.indexOf('bin') === -1
     };
 
-    let dir = opts.dir || process.cwd();
-
-    let lib = directoryLoader(`${__dirname}/../lib/`, dirFilter);
-    let app = opts.app || directoryLoader(`${dir}/`, dirFilter);//allow client to pass in own app structure
-
-    /**
-     * if an injectable by a name is missing prepopulate it with an empty object
-     * @param names
-     */
-    function fixInjectable(names) {
-        names.forEach( (name) => {
-            if (typeof app[name] !== 'object') {
-                app[name] = {};
-            }
-        })
+    let dir = opts.dir;
+    if(!dir){
+        dir = process.cwd();
+        logger.warn(`you did not include a "dir" property, loading from ${dir}...`);
     }
 
+    let lib = directoryLoader(`${__dirname}/../lib/`, dirFilter);
+    let utils = lib.interceptorUtils;
+
+    let app = opts.app || directoryLoader(`${dir}/`, dirFilter);//allow client to pass in own app structure
+
     //Pre pop all parts if missing
-    if (typeof app === 'object' && typeof app.Functions !== 'object'){//if you have no 'lambda' functions your going to have a bad time
-        fixInjectable([
-            'DataServices',
-            'DataServiceUtils',
-            'Environments',
-            'Hooks',
-            'Policies',
-            'Responses',
-            'Services',
-            'Workers'
-        ]);
+    if (typeof app === 'object' && typeof app.Functions === 'object') {//if you have no 'lambda' functions your going to have a bad time
+        utils.fillEmpty(app, ['DataServices', 'DataServiceUtils', 'Environments', 'Hooks', 'Policies', 'Responses', 'Services', 'Workers'], null, (name) => {
+            logger.warn(`no ${name} where found`);
+        });
     }
     else {
         //panic
+        logger.critical(`failed to find app missing app=${typeof app === 'object'} missing functions=${typeof app.Functions === 'object'}`);
         process.exit(1);
     }
 
-    let routes = opts.routes || [];
+    if (typeof opts.appOverrides === 'object') {
+        app = Object.assign(app, opts.appOverrides);
+    }
+
+    let routes = [];
+    if (typeof opts.routes === 'object' && Array.isArray(opts.routes)) {//TODO: later we could use concat to add default routes such as swagger
+        routes = opts.routes;
+    }
 
     let activeEnvironment = (app.Environments || {})[opts.env || process.env.ENVIRONMENT || 'dev'];
     if (typeof activeEnvironment !== 'object') {
@@ -64,80 +58,28 @@ module.exports = function (opts) {
 
     let swagger = lib.docGenerator.generateFromUrls(Object.keys(routes), routes.headers);
 
-    function calculateInjectableDataServices(nonInjectableServices) {
-        if (nonInjectableServices) {
-            return Object.keys(nonInjectableServices).reduce((acc, v) => {
-                if (Array.isArray(nonInjectableServices[v])) {
-                    if (!activeEnvironment[v]) {
-                        process.emit('error', 'environment did not include config for ' + v);
-                    }
-                    acc[v] = lib.clientBuilder(nonInjectableServices[v]).init(activeEnvironment[v]);
-                }
-                else {
-                    acc[v] = nonInjectableServices[v];//not a client
-                }
-                return acc;
-            }, {});
-        }
-        return {};
-    }
+    injectableDataServices = utils.clientBuild(app.DataServices, activeEnvironment);
 
-    injectableDataServices = calculateInjectableDataServices(app.DataServices);
-
+    //reconstruct Policies into array from map losing the policies name in the process
     let policiesArray = Object.keys(app.Policies || {}).reduce((acc, v) => {
         acc.push(app.Policies[v]);
         return acc;
     }, []);
 
-    let metricTracer = lib.metricTracer(opts.meterFnc, opts.traceFnc);
 
-    function initResponses(injectables, responses) {
-        return Object.keys(responses).reduce((acc, v) => {
-            let response = function (data) {//it is assumed that responses have 1 external parameter from the user (function)
-                lib.injector(Object.assign({data: data}, injectables), responses[v]);
-            };
-            acc[v] = opts.disableTracer ? response : metricTracer(response);
-            return acc;
-        }, {});
-    }
+    let injectables = {
+        logger: lib.logger,
+        env: activeEnvironment,
+        environment: activeEnvironment,
+        tracer: lib.tracer,
+        meter: lib.meter,
+        i18n: lib.i18n,
+        swagger: swagger,
+    };
 
-    //Workers are agnostic of lambda endpoints
-    let workerInstances = {};
+    let workerInstances = utils.setupWorkers(app.Workers, injectables);
 
-    if (typeof app.Workers === 'object') {
-        Object.keys(app.Workers).forEach(worker => {
-            if (typeof app.Workers[worker] === 'function') {
-                workerInstances[worker] = setInterval(function () {
-                    lib.injector({
-                        logger: lib.logger,
-                        env: activeEnvironment,
-                        tracer: lib.tracer,
-                        meter: lib.meter,
-                        i18n: lib.i18n
-                    }, app.Workers[worker]);
-                }, worker.interval || DEFAULT_WORKER_INTERVAL);
-            }
-        });
-    }
-
-    function runtimeMockDataServices(useableDataServices, mockContext) {
-        if(typeof useableDataServices !== 'object'){
-            return {};
-        }
-        if(typeof mockContext !== 'object'){
-            return useableDataServices;
-        }
-
-        useableDataServices = lib.structured.toImplentation(mockContext);
-        Object.keys(injectableDataServices).forEach((serviceName) => {
-            if (typeof injectableDataServices[serviceName].overrideable === 'boolean' && !injectableDataServices[serviceName].overrideable) {//if false but not falsey
-                useableDataServices[serviceName] = injectableDataServices[serviceName];
-            }
-        });
-        return useableDataServices;
-    }
-
-    let generateExecutableLambdas = function (functions) {
+    function generateExecutableLambdas(functions) {
         return Object.keys(functions || {}).reduce((acc, lambdaName) => {
 
             //add the active function to the tail end of the middlware array
@@ -150,109 +92,68 @@ module.exports = function (opts) {
 
             acc[lambdaName] = function (event, context, callback) {
 
-                if(typeof context === 'object' && !opts.callbackWaitsForEmptyEventLoop){
+                if (typeof context === 'object' && !opts.callbackWaitsForEmptyEventLoop) {
                     context.callbackWaitsForEmptyEventLoop = false;//so aws does not keep running lambda after callback
                 }
 
+                let metricTracer = lib.metricTracer(opts.meterFnc, opts.traceFnc);
+                let metricTracerIfEnabled = opts.disableTracer ? null : metricTracer;
+
+                //give hooks event,context, etc injectables
+                let coreRuntimeInjectables = Object.assign(injectables, {
+                    event: event,
+                    context: context
+                });
+
                 //init responses with the ability to inject the callback and on the fly inject the 'data' param
-                let injectableResponse = initResponses({callback: callback, event : event, context : context}, app.Responses || {});
+                let injectableResponse = utils.injectDataFirst(Object.assign(coreRuntimeInjectables, { callback : callback }), app.Responses, metricTracerIfEnabled);
+                coreRuntimeInjectables.res = injectableResponse;
+
                 let useableDataServices = injectableDataServices;
 
-                function injectWrapper(injectables, injectees) {
-                    return lib.injector(Object.assign({
-                        res: injectableResponse,
-                        i18n: lib.i18n,
-                        meter: lib.meter,
-                        tracer: lib.tracer,
-                        logger: lib.logger,
-                        swagger: swagger,
-                        event: event,
-                        context: context,
-                        environment : activeEnvironment
-                    }, useableDataServices, injectables), injectees, opts.disableTracer ? null : metricTracer);
-                }
 
                 let mockContext = (typeof opts.mockContext === 'function') ? opts.mockContext(event, context) : null;//user includes a function to extra mocks
                 if (mockContext) {
-                    useableDataServices = runtimeMockDataServices(useableDataServices, mockContext);
+                    logger.info('mocks are enabled for this session');
+                    useableDataServices = utils.runtimeMockDataServices(injectableDataServices, useableDataServices, mockContext);
                 }
 
-                //give hooks event,context, etc injectables
-                let useableHooks = injectWrapper({}, app.Hooks);
-
-                let injectables = Object.assign({}, injectableResponse, useableHooks);
-
-                //give data services event,context injectables as well as hooks
-                useableDataServices = injectWrapper(injectables, useableDataServices);//allow dataservices to have event or context injected within
-
-                injectables = Object.assign(injectables, useableDataServices);
-
-                //allow someone who can be called by Services that also has access to dataservices for convenience
-                let useableDataServiceUtils = injectWrapper(injectables, app.DataServiceUtils || {});
-
-                injectables = Object.assign(injectables, useableDataServiceUtils);
-
-                let instantiatedServices = injectWrapper(injectables, app.Services);
-
-                injectables = Object.assign(injectables, instantiatedServices);
-
-                //generate middlware from custom middlware with injectables ( responses, dataServices, services )
-                let injectableMiddlware = injectWrapper(injectables, middleware);
+                let injectableMiddlware = utils.aggregateInjector(Object.assign(coreRuntimeInjectables), [
+                    app.Hooks,//must be first
+                    useableDataServices,
+                    app.DataServiceUtils,
+                    app.Services,
+                    middleware//must be last
+                ], metricTracerIfEnabled);
 
                 //create pipeline!
                 lib.pipeline({
                     timeout: false
                 }, injectableMiddlware)(context, injectableResponse, (event, context) => {
-                    injector({
+                    lib.injector(Object.assign(coreRuntimeInjectables, {
                         event: event,
-                        context: context,
-                        logger: lib.logger,
-                        i18n: lib.i18n,
-                        env: activeEnvironment,
-                        tracer: lib.tracer,
-                        meter: lib.meter,
-                        environment: activeEnvironment
-                    }, callback);
+                        context: context
+                    }), callback);
                 });
             };
 
             return acc;
         }, {});
-    };
-
-    function generatorReadyData(inputServices){
-        return Object.keys(inputServices).reduce((services, serviceName) => {
-            services[serviceName] = Object.keys(inputServices[serviceName]).reduce((service, funcName) => {
-                if(['restClient', 'init', 'interpolate', 'debug', 'initialized', 'fncVarReplacements'].indexOf(funcName) === -1){
-                    service[funcName] = inputServices[serviceName][funcName];
-                }
-                return service;
-            }, {});
-            return services;
-        }, {});
     }
 
-    function generatorSchema(schema){
-        return lib.structured.toGenerator(schema);
-    }
-
-    function mockSchema(schema){
-        return lib.structured.toStructure(schema);
-    }
-
-    //support for newer interceptor
-    if(opts.edge){
-        let dataServiceSchema = generatorReadyData(injectableDataServices);
+    //support for newer interceptor edge will be removed in a major release as a breaking change
+    if (opts.edge) {
+        let dataServiceSchema = lib.interceptorUtils.generatorReadyData(injectableDataServices);
         return {
-            functions : app.Functions,
-            lambdasGenerator : generateExecutableLambdas,
-            dataServices : injectableDataServices,
-            swagger : swagger,
-            workers : workerInstances,
-            mockGenerator : generatorSchema(dataServiceSchema),
-            mockSchema : mockSchema(dataServiceSchema),
-            mockContext : opts.mockContext==='function'?opts.mockContext.toString():null,
-            pipelines : generateExecutableLambdas(app.Functions)
+            functions: app.Functions,
+            lambdasGenerator: generateExecutableLambdas,
+            dataServices: injectableDataServices,
+            swagger: swagger,
+            workers: workerInstances,
+            mockGenerator: lib.structured.toGenerator(dataServiceSchema),
+            mockSchema: lib.structured.toStructure(dataServiceSchema),
+            mockContext: opts.mockContext === 'function' ? opts.mockContext.toString() : null,
+            pipelines: generateExecutableLambdas(app.Functions)
         };
     }
     else {
