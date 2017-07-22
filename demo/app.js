@@ -34,7 +34,10 @@ else {
         // edge : true
     });
 
-    //lets execute our lambda for this demo (normally you would module.handler = lambdas;)//or the specific lambda
+    //you would normally export your lambdas like this
+    //exports.handler = lambdas.userCurrency;
+
+    let start = process.hrtime();
     lambdas.userCurrency({
         currency: 'USD'
     }, {
@@ -47,6 +50,8 @@ else {
             }
         }:undefined
     }, function(err, data) {
+        let end = process.hrtime(start);
+        console.error('time to run', (end[0] * 1e9 + end[1])/1000000, 'ms');//
         console.log(JSON.stringify(data, null, 3));
         process.exit(0);//have to use exit here if we dont want the lambda to continue running because of the worker we have
     });

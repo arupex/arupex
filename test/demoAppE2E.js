@@ -3,10 +3,33 @@ describe('Demo App', () => {
     let spawn = require('child_process').spawnSync;
     let assert = require('assert');
 
-    it('check result', () => {
-        let result = spawn('node', ['app.js'], { cwd : `${__dirname}/../demo/`}).stdout;
 
-        let data = JSON.parse(result);
+    function throwErrorIfSlow(spawnResult, speed) {
+        let timeToRun = /time to run (\d+)\.(\d+) ms/.exec(spawnResult.stderr.toString());
+        let t = parseFloat(`${timeToRun[1]}.${timeToRun[2]}`);
+        if (t > speed) {
+            throw new Error(`App took too long, performance issue? exceeded by ${t-speed} ms`);
+        }
+    }
+
+    it('check result', () => {
+        let spawn2 = spawn('node', ['app.js'], {
+            cwd : `${__dirname}/../demo/`,
+            env : Object.assign(process.env, { MOCK : '' })});
+        let result = spawn2.stdout;
+
+        console.log('\t', spawn2.stderr.toString());
+
+        throwErrorIfSlow(spawn2, 300);
+
+        let data = {};
+        try {
+            data = JSON.parse(result.toString());
+        }
+        catch(e){
+            console.log('could not parse json', result.toString());
+            throw new Error(e);
+        }
 
         let body = JSON.parse(data.body);
         assert.deepEqual(body.code, 200);
@@ -22,10 +45,11 @@ describe('Demo App', () => {
 
         let result = spawnResult.stdout.toString();
 
+
+        console.log('\t', spawnResult.stderr.toString());
+        throwErrorIfSlow(spawnResult, 7);
+
         result = result.replace(/^.*mocks are enabled for this session/, '');
-        if(!result){
-            console.error(spawnResult.stderr);
-        }
 
         let data = JSON.parse(result);
 
