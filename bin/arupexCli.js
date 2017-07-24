@@ -54,7 +54,9 @@ function run() {
 
             case 'server':
                 server = arupex.interceptors.http.start(port, {
-                    dir: dir
+                    dir: dir,
+                    meterFnc : () => {},
+                    traceFnc : () => {}
                 });
                 return;
             case 'mock':
@@ -115,7 +117,9 @@ function run() {
     }
     else {
         server = arupex.interceptors.http.start(port, {
-            dir: dir
+            dir: dir,
+            meterFnc: () => {},
+            traceFnc: () => {}
         });
     }
 }
