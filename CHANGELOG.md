@@ -12,3 +12,11 @@ This Release includes all the major components in a working state, rigorous test
 ### 0.0.15 - Mocks can now handle parameters like real functions
 ### 0.0.16 - multDirLoader for aws handle the fact 'tree' unix command does not work
 ### 0.0.17 - force callbackWaitsForEmptyEventLoop to false on context, if context is an obj, and opts.callbackWaitsForEmptyEventLoop is not true
+### 0.0.18 - Minor Tweaks
+### 0.0.19 - Removal of es7 padEnd from arupexCLI as some users complain does not operate on node 6
+
+### 0.1.20 - Cleanup of lambda interceptor!
+ - interceptorUtils, reducing complexity of lambda interceptor and making it possible to unit test much of it later
+ - 2 tests that run demo to validate e2e operation
+ - logger can now log functions as part of json with the output of [FUNCTION] using custom JSON.stringify replacer fnc
+ 
