@@ -26,6 +26,7 @@ describe('Route-Analyzer', () => {
                 pre : [],
                 post : []
             },
+            requestedRoute: 'http://localhost:1337/api/v1/measures/123/metadata?locale=en_US&session=fred',
             queryParams: {
                 locale: 'en_US',
                 session: 'fred'
