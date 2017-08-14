@@ -6,6 +6,7 @@ let cmd = process.argv[2];
 let port = process.env.PORT || 1337;
 let functionName = process.argv[3];
 let watch = process.argv.indexOf('watch') !== -1;
+let disableTrace = process.argv.indexOf('disableTrace') !== -1;
 let server = null;
 let appCreator = require('./appCreator');
 let logger = new arupex.lib.logger('CLI-Logger');
@@ -30,6 +31,7 @@ function run() {
         switch (cmd) {
             case 'schema':
                 let value = arupex.interceptors.lambdas({
+                    disableTracer : disableTrace,
                     meterFnc: () => {},
                     traceFnc: () => {},
                     dir: dir,
@@ -54,6 +56,7 @@ function run() {
 
             case 'server':
                 server = arupex.interceptors.http.start(port, {
+                    disableTracer : disableTrace,
                     dir: dir,
                     meterFnc : () => {},
                     traceFnc : () => {}
@@ -62,6 +65,7 @@ function run() {
             case 'mock':
                 console.log(`Running Mock Server on port : ${port}`);
                 server = arupex.interceptors.mockServer(port, {
+                    disableTracer : disableTrace,
                     dir: dir,
                     meterFnc : function meterFinish(meter){
                         logger.info('meter', meter);
