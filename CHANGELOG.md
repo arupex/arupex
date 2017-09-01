@@ -21,3 +21,4 @@ This Release includes all the major components in a working state, rigorous test
  - logger can now log functions as part of json with the output of [FUNCTION] using custom JSON.stringify replacer fnc
  
 ### 0.1.23 - Update Hyper-Request and use ^ version for updates
+### 0.1.24 - Update Hyper-Request to minimum of 0.0.16
