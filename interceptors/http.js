@@ -1,65 +1,71 @@
 /**
  * Created by daniel.irwin on 6/17/17.
  */
-module.exports = (function() {
+module.exports = (function () {
 
     let server = null;
 
     return {
-        start : function (port, opts) {
+        start: function (port, opts) {
             const http = require('http');
 
             let dir = opts.dir || process.cwd();
-
-            let routes = require(`${dir}/routes`);
-
-            let lambdas = require('./lambdas')(opts);
-
+            let routes = opts.routes || require(`${dir}/routes`);
             let conductor = require('../lib/routeAnalyzer').conductor(routes);
 
             let cookieParser = require('../lib/cookieParser');
 
-            server = http.createServer((httpRequest, httpResponse) => {
-                 function (req, res) {
-                   let choosenRoute = conductor(req.url);
-                    if (!choosenRoute) {
-                        res.write('HTTP/1.1 404 Not Found\r\n\r\n');
-                        res.end();
+            const LambdaFactory = require('./lambdas');
+
+            server = http.createServer((req, res) => {
+
+                let lambdas = LambdaFactory(opts);
+
+                const choosenRoute = conductor(req.url);
+
+                if (!choosenRoute) {
+                    res.write();
+                    res.end('HTTP/1.1 404 Not Found\r\n\r\n');
+                    return;
+                }
+
+                const event = Object.assign({
+                    cookies: cookieParser(req.headers)
+                }, choosenRoute, {
+                    body: req.body,
+                    headers: req.headers
+                });
+
+                const context = {};
+
+                lambdas[choosenRoute.rail](event, context, (err, data) => {
+                    if (typeof data !== 'string') {
+                        data = JSON.stringify(data);
                     }
-                    else {
-                        lambdas[choosenRoute.rail](Object.assign({
-                            cookies: cookieParser(req.headers)
-                        }, choosenRoute, {
-                            body: req.body,
-                            headers: req.headers
-                        }), {}, (err, data, ress) => {
-                            if (typeof data !== 'string') {
-                                data = JSON.stringify(data);
-                            }
-                            res.end(data);
-                        });
-                    }   
-                }(httpRequest, httpResponse);
+                    res.end(data);
+                });
+
             });
 
             server.on('clientError', (err, socket) => {
                 socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
             });
 
+            server.keepAliveTimeout = 0;
+
             server.listen(port || 1337);
-        }
-    ,
-        close : (cb) => {
-            if(server){
+        },
+
+        close: (cb) => {
+            if (server) {
                 server.close(() => {
                     server = null;
-                    if(typeof cb === 'function'){
+                    if (typeof cb === 'function') {
                         cb();
                     }
                 });
             }
         }
-    }
-    ;
+    };
 
 })();

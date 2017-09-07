@@ -3,8 +3,8 @@
  */
 module.exports = function (opts) {
 
-    let loggerFactory = require('../lib/logger', { level : (opts.logLevel||'warn') });
-    let logger = new loggerFactory('Lambda-Interceptor');
+    let loggerFactory = require('../lib/logger');
+    let logger = new loggerFactory('Lambda-Interceptor', { level : (opts.logLevel||'warn') });
 
     let directoryLoader = require('../lib/multiDirLoader');
 
@@ -54,11 +54,8 @@ module.exports = function (opts) {
         activeEnvironment = {};//fix it sort of ?
     }
 
-    let injectableDataServices = {};
-
     let swagger = lib.docGenerator.generateFromUrls(Object.keys(routes), routes.headers);
 
-    injectableDataServices = utils.clientBuild(app.DataServices, activeEnvironment);
 
     //reconstruct Policies into array from map losing the policies name in the process
     let policiesArray = Object.keys(app.Policies || {}).reduce((acc, v) => {
@@ -67,6 +64,8 @@ module.exports = function (opts) {
     }, []);
 
 
+    let injectableDataServices = utils.clientBuild(app.DataServices, activeEnvironment);
+
     let injectables = {
         logger: lib.logger,
         env: activeEnvironment,
@@ -74,7 +73,7 @@ module.exports = function (opts) {
         tracer: lib.tracer,
         meter: lib.meter,
         i18n: lib.i18n,
-        swagger: swagger,
+        swagger: swagger
     };
 
     let workerInstances = utils.setupWorkers(app.Workers, injectables);
@@ -92,11 +91,29 @@ module.exports = function (opts) {
 
             acc[lambdaName] = function (event, context, callback) {
 
+                context.arupexAudit = [];
+
+                let auditor = {
+                    logLevel : 'info',
+                    errStream : {
+                        write : typeof opts.errStreamWrite === 'function'? opts.errStreamWrite:function(data){
+                            process.stderr.write(data);
+                            context.arupexAudit.push(data);
+                        }
+                    },
+                    outStream : {
+                        write : typeof opts.outStreamWrite === 'function'?opts.outStreamWrite:function(data){
+                            process.stdout.write(data);
+                            context.arupexAudit.push(data);
+                        }
+                    }
+                };
+
                 if (typeof context === 'object' && !opts.callbackWaitsForEmptyEventLoop) {
                     context.callbackWaitsForEmptyEventLoop = false;//so aws does not keep running lambda after callback
                 }
 
-                let metricTracer = lib.metricTracer(opts.meterFnc, opts.traceFnc);
+                let metricTracer = lib.metricTracer(opts.meterFnc, opts.traceFnc, auditor);
                 let metricTracerIfEnabled = opts.disableTracer ? null : metricTracer;
 
                 //give hooks event,context, etc injectables
@@ -109,13 +126,18 @@ module.exports = function (opts) {
                 let injectableResponse = utils.injectDataFirst(Object.assign(coreRuntimeInjectables, { callback : callback }), app.Responses, metricTracerIfEnabled);
                 coreRuntimeInjectables.res = injectableResponse;
 
-                let useableDataServices = injectableDataServices;
-
+                let useableDataServices = Object.keys(injectableDataServices).reduce((acc, serviceName) => {
+                    if(typeof injectableDataServices[serviceName] === 'object' && typeof injectableDataServices[serviceName].setLogger === 'function'){
+                        injectableDataServices[serviceName].setLogger(new loggerFactory(serviceName, auditor));
+                    }
+                    acc[serviceName] = injectableDataServices[serviceName];
+                    return acc;
+                }, {});
 
                 let mockContext = (typeof opts.mockContext === 'function') ? opts.mockContext(event, context) : null;//user includes a function to extra mocks
                 if (mockContext) {
                     logger.info('mocks are enabled for this session');
-                    useableDataServices = utils.runtimeMockDataServices(injectableDataServices, useableDataServices, mockContext);
+                    useableDataServices = utils.runtimeMockDataServices(useableDataServices, mockContext);
                 }
 
                 let injectableMiddlware = utils.aggregateInjector(Object.assign(coreRuntimeInjectables), [
@@ -124,7 +146,7 @@ module.exports = function (opts) {
                     app.DataServiceUtils,
                     app.Services,
                     middleware//must be last
-                ], metricTracerIfEnabled);
+                ], metricTracerIfEnabled, auditor);
 
                 //create pipeline!
                 lib.pipeline({
@@ -133,7 +155,7 @@ module.exports = function (opts) {
                     lib.injector(Object.assign(coreRuntimeInjectables, {
                         event: event,
                         context: context
-                    }), callback);
+                    }), callback, null, auditor);
                 });
             };
 
