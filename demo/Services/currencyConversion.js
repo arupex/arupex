@@ -1,7 +1,7 @@
 /**
  * Created by daniel.irwin on 6/25/17.
  */
-module.exports = function(CurrencyDataService, UserDataService){
+module.exports = function(CurrencyDataService, UserDataService, Request){
 
     function getRates(){
         return UserDataService.getOtherCurrency({}).then(base => {
@@ -9,8 +9,16 @@ module.exports = function(CurrencyDataService, UserDataService){
         });
     }
 
+    function getDay (day){
+        return CurrencyDataService.getDay({
+            date : day,
+            symbols : Request.getCurrency()
+        });
+    }
+
     return {
-        getRates : getRates
+        getRates : getRates,
+        getDay : getDay
     };
 
 };

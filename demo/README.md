@@ -17,6 +17,13 @@ It allows you to build a serverless application for your needs, but also allows 
  - Simplifying Workflows
  - Making Dependency Injection simple and elegant
 
+# Injection Order - injection is aggregate so each lower is injecting all upper dependencies
+ - Hooks
+ - DataServices
+ - DataServiceUtils
+ - Service
+ - Policies
+ - Functions
 
 # Examples - [download example project](https://github.com/arupex/arupex-demo/archive/master.zip)
  
