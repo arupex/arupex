@@ -19,25 +19,27 @@ module.exports = (function() {
 
             let cookieParser = require('../lib/cookieParser');
 
-            server = http.createServer((req, res) => {
-                let choosenRoute = conductor(req.url);
-                if (!choosenRoute) {
-                    res.write('HTTP/1.1 404 Not Found\r\n\r\n');
-                    res.end();
-                }
-                else {
-                    lambdas[choosenRoute.rail](Object.assign({
-                        cookies: cookieParser(req.headers)
-                    }, choosenRoute, {
-                        body: req.body,
-                        headers: req.headers
-                    }), {}, (err, data, ress) => {
-                        if (typeof data !== 'string') {
-                            data = JSON.stringify(data);
-                        }
-                        res.end(data);
-                    });
-                }
+            server = http.createServer((httpRequest, httpResponse) => {
+                 function (req, res) {
+                   let choosenRoute = conductor(req.url);
+                    if (!choosenRoute) {
+                        res.write('HTTP/1.1 404 Not Found\r\n\r\n');
+                        res.end();
+                    }
+                    else {
+                        lambdas[choosenRoute.rail](Object.assign({
+                            cookies: cookieParser(req.headers)
+                        }, choosenRoute, {
+                            body: req.body,
+                            headers: req.headers
+                        }), {}, (err, data, ress) => {
+                            if (typeof data !== 'string') {
+                                data = JSON.stringify(data);
+                            }
+                            res.end(data);
+                        });
+                    }   
+                }(httpRequest, httpResponse);
             });
 
             server.on('clientError', (err, socket) => {
