@@ -88,5 +88,53 @@ describe('Demo App', () => {
         });
 
     });
+    
+
+
+
+    it('test query mock', function (done) {
+
+        process.env.MOCK='';
+        process.env.TEST='true';
+
+
+        let app = require('../demo/app');
+
+        app.userCurrency({
+            date : '2000-01-02',
+            currency : 'USD'
+        },{
+            mockData : {
+            CurrencyDataService: {
+                getLatestBase : {
+                    query: {
+                        '{ "base" : "USD" }': {
+                            JPY: 77
+                        },
+                        '{ "base" : "JPY" }': {
+                            USD: 11
+                        }
+                    }
+                }
+
+            }
+            }
+        }, (err, data) => {
+
+            console.log('======================\n\n',data.body,'\n\n===================')
+
+            assert.deepEqual({
+                code : 200,
+                message : 'ok',
+                data : {
+                    JPY : 77
+                }
+            }, JSON.parse(data.body));
+
+            done();
+
+        });
+
+    });
 
 });

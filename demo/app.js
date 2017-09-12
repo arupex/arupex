@@ -32,7 +32,7 @@ const config = {
 
 let lambdas = interceptors.lambdas(config);
 
-if(process.env.MOCK){
+if(process.argv.indexOf('MOCK_SERVER') > -1){
     interceptors.mockServer(7331, config, {
         sampleEvent: {
             "from_currency": "USD",
@@ -48,7 +48,7 @@ else if(process.env.server) {
     });
 }
 else if(process.env.TEST){
-    exports.dataForDay = lambdas.dataForDay;
+    Object.assign(exports, lambdas);
 }
 else {
 
