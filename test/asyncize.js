@@ -137,10 +137,58 @@ describe('asyncize', function(){
 
 
     it('test ability to pass in opts object promise query fail', (done) => {
-        asyncize.conform(null, 'error', {})({}).then(function() {
+        let func = asyncize.conform(null, 'error', { '{"code" : "JPY", "date" : "2017" }' : 6 });
+
+        func({
+            code : 'JPY',
+            date : '2017'
+        }).then(function(data) {
+            if(data !== 6){
+                done(new Error('value was not 6'));
+            }
+            else {
+                done();
+            }
+        }, function(err){
+            done(new Error(err));
+        });
+    });
+
+
+    it('test ability to pass in opts object promise query fail becaues of query', (done) => {
+        let func = asyncize.conform(null, 'error', { '{"code" : "DOG", "date" : "2017" }' : 6 });
+
+        func({
+            code : 'JPY',
+            date : '2017'
+        }).then(function(data) {
+            done(new Error(data));
+        }, function(err){
+            if(err === 'error') {
+                done();
+            }
+            else {
+                done(new Error(err));
+            }
+        });
+    });
+
+    it('test ability to pass in opts object promise query good', (done) => {
+        let func = asyncize.conform(null, null, { '{"code" : "JPY", "date" : "2017" }' : 6 });
+
+        func({
+            code : 'JPY',
+            date : '2017'
+        }).then(function(data) {
+            if(data !== 6){
+                done(new Error('value was not 6'));
+            }
+            else {
+                done();
+            }
 
         }, function(){
-            done();
+            done(new Error('error was triggered instead of success'));
         });
     });
 
