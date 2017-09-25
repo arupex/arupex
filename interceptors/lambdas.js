@@ -91,20 +91,26 @@ module.exports = function (opts) {
 
             acc[lambdaName] = function (event, context, callback) {
 
-                context.arupexAudit = [];
+                if(typeof context === 'object') {
+                    context.arupexAudit = [];
+                }
 
                 let auditor = {
                     logLevel : 'info',
                     errStream : {
                         write : typeof opts.errStreamWrite === 'function'? opts.errStreamWrite:function(data){
                             process.stderr.write(data);
-                            context.arupexAudit.push(data);
+                            if(context && Array.isArray(context.arupexAudit)) {
+                                context.arupexAudit.push({errStream :data});
+                            }
                         }
                     },
                     outStream : {
                         write : typeof opts.outStreamWrite === 'function'?opts.outStreamWrite:function(data){
                             process.stdout.write(data);
-                            context.arupexAudit.push(data);
+                            if(context && Array.isArray(context.arupexAudit)) {
+                                context.arupexAudit.push({ outStream : data});
+                            }
                         }
                     }
                 };
@@ -113,8 +119,7 @@ module.exports = function (opts) {
                     context.callbackWaitsForEmptyEventLoop = false;//so aws does not keep running lambda after callback
                 }
 
-                let metricTracer = lib.metricTracer(opts.meterFnc, opts.traceFnc, auditor);
-                let metricTracerIfEnabled = opts.disableTracer ? null : metricTracer;
+                let metricTracer = opts.disableTracer? null : lib.metricTracer(opts.meterFnc, opts.traceFnc, auditor);
 
                 //give hooks event,context, etc injectables
                 let coreRuntimeInjectables = Object.assign(injectables, {
@@ -123,7 +128,7 @@ module.exports = function (opts) {
                 });
 
                 //init responses with the ability to inject the callback and on the fly inject the 'data' param
-                let injectableResponse = utils.injectDataFirst(Object.assign(coreRuntimeInjectables, { callback : callback }), app.Responses, metricTracerIfEnabled);
+                let injectableResponse = utils.injectDataFirst(Object.assign(coreRuntimeInjectables, { callback : callback }), app.Responses, metricTracer);
                 coreRuntimeInjectables.res = injectableResponse;
 
                 let useableDataServices = Object.keys(injectableDataServices).reduce((acc, serviceName) => {
@@ -146,7 +151,7 @@ module.exports = function (opts) {
                     app.DataServiceUtils,
                     app.Services,
                     middleware//must be last
-                ], metricTracerIfEnabled, auditor);
+                ], metricTracer, auditor);
 
                 //create pipeline!
                 lib.pipeline({
