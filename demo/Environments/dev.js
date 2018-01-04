@@ -4,6 +4,7 @@
 module.exports = {
 
     CurrencyDataService : {
+        disablePipe : true,
         baseUrl : 'http://api.fixer.io/',
         respondWithProperty: 'rates',
         cacheTtl : 10000//identical requests within 10seconds will respond from memory
