@@ -26,3 +26,4 @@ This Release includes all the major components in a working state, rigorous test
 ### 0.2.25 - Refactor Release redesign of many logging and other auditing functions as well as interceptor/injector utils
 
 ### 0.2.26 - Fix an if statement in interceptorUtils that will cause issues if a service is not in an environment
+### 0.2.27 - Hotfix for DataService issues
