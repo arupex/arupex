@@ -22,3 +22,7 @@ This Release includes all the major components in a working state, rigorous test
  
 ### 0.1.23 - Update Hyper-Request and use ^ version for updates
 ### 0.1.24 - Update Hyper-Request to minimum of 0.0.16
+
+### 0.2.25 - Refactor Release redesign of many logging and other auditing functions as well as interceptor/injector utils
+
+### 0.2.26 - Fix an if statement in interceptorUtils that will cause issues if a service is not in an environment
