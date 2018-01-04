@@ -2,7 +2,7 @@
   "name": "arupex-demo",
   "version": "0.0.1",
   "dependencies": {
-    "arupex": "^0.2.25",
+    "arupex": "^0.2.26",
     "moment": "^2.18.1"
   }
 }
