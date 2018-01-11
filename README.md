@@ -88,6 +88,7 @@ can be thought of as a pyramid, were at each level the previous levels are injec
      
      
      Arupex Core - logger, tracer, meter, i18n, swagger, directoryLoader
+     Pre-Execution happens when your arupex application is loaded but before it is invoke as a lambda
      Environment-Models are initalized as part of Pre-Execution
      DataServices if clients are initalized as Part of Pre-Execution else during execution(request)
      Event-Services are initalized during Execution
