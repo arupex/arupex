@@ -5,7 +5,6 @@
   "main": "arupex.js",
   "scripts": {
     "test": "jshint lib || exit 1;mocha test || exit 1;",
-    "postinstall" : "cd demo;npm i;cd ..",
     "prepublishOnly": "npm test"
   },
   "bin": {
