@@ -29,7 +29,7 @@ module.exports = function (opts) {
 
     //Pre pop all parts if missing
     if (typeof app === 'object' && typeof app.Functions === 'object') {//if you have no 'lambda' functions your going to have a bad time
-        utils.fillEmpty(app, ['DataServices', 'DataServiceUtils', 'Environments', 'Hooks', 'Policies', 'Responses', 'Services', 'Workers'], null, (name) => {
+        utils.fillEmpty(app, ['DataServices', 'DataServiceUtils', 'Environments', 'Hooks', 'Policies', 'Responses', 'Services', 'Workers', 'Core', 'Models'], null, (name) => {
             logger.warn(`no ${name} where found`);
         });
     }
@@ -73,10 +73,18 @@ module.exports = function (opts) {
         tracer: lib.tracer,
         meter: lib.meter,
         i18n: lib.i18n,
-        swagger: swagger
+        swagger: swagger,
+        directoryLoader : directoryLoader
     };
 
     let workerInstances = utils.setupWorkers(app.Workers, injectables);
+
+    let preExecutionContextInjectables = utils.aggregateInjector(Object.assign(injectables), [
+        app.Core,
+        app.Models
+    ]);
+
+    injectables = Object.assign(injectables, preExecutionContextInjectables);//extend injectables with Core/Models/etc
 
     function generateExecutableLambdas(functions) {
         return Object.keys(functions || {}).reduce((acc, lambdaName) => {

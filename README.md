@@ -25,13 +25,15 @@ Check out our [Documentation](./demo/README.md)
 
 # Project Folder Structure
     ├── DataServiceUtils
-    │   └── DataServiceUtil.js
+    │   └── PetShopDataServiceUtil.js
     ├── DataServices
-    │   └── DataService.js
+    │   └── PetShopDataService.js
     ├── Environments
     │   └── dev.js
     ├── Functions
-    │   └── helloworld.js
+    │   └── getPet.js
+    │   └── addPet.js
+    │   └── deletePet.js
     ├── Hooks
     │   └── Cookies.js
     │   └── Headers.js
@@ -48,10 +50,48 @@ Check out our [Documentation](./demo/README.md)
     ├── Policies
     │   └── auth.js
     │   └── paramCheck.js
+    ├── Core
+    │   └── PetStoreReference.js
+    ├── Models
+    │   └── Pet.js
     ├── app.js
     ├── node_modules
     |    ...
     └── package.json
+    
+## Dependency Injection LifeCycle
+can be thought of as a pyramid, were at each level the previous levels are injectable
+
+                ---------------
+               /  Environment  \
+               -----------------
+              /    Arupex Core  \
+              -------------------
+             /         Core      \
+             ---------------------
+            /         Models      \
+             ----------------------
+           / Event/Context/Callback \
+           --------------------------
+          /           Hooks          \
+          ----------------------------
+         /        DataServices        \
+         ------------------------------
+        /       DataServiceUtils       \
+        --------------------------------
+       /           Services             \
+       ----------------------------------
+      /            Functions             \
+      ------------------------------------
+     /               app.js               \
+     --------------------------------------
+     
+     
+     Arupex Core - logger, tracer, meter, i18n, swagger, directoryLoader
+     Environment-Models are initalized as part of Pre-Execution
+     DataServices if clients are initalized as Part of Pre-Execution else during execution(request)
+     Event-Services are initalized during Execution
+     Functions/App.js are initalized during Pre-Execution
 
 #### CLI
     
