@@ -38,6 +38,7 @@ describe('logger', function(){
         let myLogger = new logger('Dev Logger', {});
 
         myLogger.box('quick test', [{ test : 'test1'}, { test : 'test2'}]);
+        myLogger.pretty('quick test', [{ test : 'test1'}, { test : 'test2'}]);
 
     });
 
