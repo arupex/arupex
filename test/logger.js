@@ -39,6 +39,8 @@ describe('logger', function(){
 
         myLogger.box('quick test', [{ test : 'test1'}, { test : 'test2'}]);
         myLogger.pretty('quick test', [{ test : 'test1'}, { test : 'test2'}]);
+        myLogger.setPretty(true);
+        myLogger.box('quick test', [{ test : 'test1'}, { test : 'test2'}]);
 
     });
 
