@@ -44,7 +44,7 @@ class AdvancedHttpServer {
                 let sessionAuthorizer = authorizer;
 
                 //ping shouldnt have to go through the authorizer
-                if (typeof authorizer !== 'function' || (ignoreAuthorizerRoutes || []).includes(chosenRoute.resources)) {
+                if (typeof authorizer !== 'function' || (ignoreAuthorizerRoutes || []).includes(chosenRoute.resource)) {
                     sessionAuthorizer = function (event, context, callback) {
                         callback(null, {});
                     };
