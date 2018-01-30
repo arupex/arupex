@@ -71,4 +71,79 @@ describe('Route-Analyzer', () => {
         }
 
     });
+
+
+
+
+    it('decompile multiple path params', () => {
+
+        let route = '/api/v1/measures/{{measureId}}/{{friendlyId}}?locale={locale}&session={{session}}';
+        let testUrl = 'http://localhost:1337/api/v1/measures/123/412/?locale=en_US&session=fred';
+
+        let routes = {};
+        routes[route] = {
+            action : '',
+            pre : [],
+            post : []
+        };
+
+        console.log(JSON.stringify(router.decompileRoute(route), null, 3));
+
+        const conducted = JSON.stringify(router.conductor(routes)(testUrl), null , 3);
+        console.log(conducted);
+        assert.equal(conducted, JSON.stringify({
+            rail: {
+                action: '',
+                pre : [],
+                post : []
+            },
+            requestedRoute: 'http://localhost:1337/api/v1/measures/123/412/?locale=en_US&session=fred',
+            queryParams: {
+                locale: 'en_US',
+                session: 'fred'
+            },
+            pathParams: {
+                measureId: '123',
+                friendlyId: '412'
+            }
+        }, null, 3));
+
+    });
+
+
+
+    it('decompile route validation test with path param and immediate query params', () => {
+
+        let route = '/api/v1/measures/{{measureId}}?locale={locale}&session={{session}}';
+        let testUrl = 'http://localhost:1337/api/v1/measures/123?locale=en_US&session=fred';
+
+        let routes = {};
+        routes[route] = {
+            action : '',
+            pre : [],
+            post : []
+        };
+
+        console.log(JSON.stringify(router.decompileRoute(route), null, 3));
+
+        const conducted = JSON.stringify(router.conductor(routes)(testUrl), null , 3);
+        console.log(conducted);
+        assert.equal(conducted, JSON.stringify({
+            rail: {
+                action: '',
+                pre : [],
+                post : []
+            },
+            requestedRoute: 'http://localhost:1337/api/v1/measures/123?locale=en_US&session=fred',
+            queryParams: {
+                locale: 'en_US',
+                session: 'fred'
+            },
+            pathParams: {
+                measureId: '123'
+            }
+        }, null, 3));
+
+    });
+
 });

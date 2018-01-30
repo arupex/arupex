@@ -31,4 +31,18 @@ describe('logger', function(){
 
     });
 
+
+    it('quick box dev test', () => {
+        process.env.NODE_ENV = 'dev';
+
+        let myLogger = new logger('Dev Logger', {});
+
+        myLogger.box('quick test', [{ test : 'test1'}, { test : 'test2'}]);
+        myLogger.pretty('quick test', [{ test : 'test1'}, { test : 'test2'}]);
+        myLogger.setPretty(true);
+        myLogger.box('quick test', [{ test : 'test1'}, { test : 'test2'}]);
+
+    });
+
+
 });
