@@ -29,6 +29,13 @@ module.exports = (function () {
                     return;
                 }
 
+                if(typeof req.body === 'string') {
+                    try {
+                        req.body = JSON.parse(req.body);
+                    }
+                    catch(e){}
+                }
+
                 const event = Object.assign({
                     cookies: cookieParser(req.headers)
                 }, choosenRoute, {
