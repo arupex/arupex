@@ -1,5 +1,7 @@
-const arupex = require('arupex');
-const cookieParser = arupex.lib.cookieParser;
+
+const cookieParser = require('../lib/cookieParser');
+const routeAnalyzer = require('../lib/routeAnalyzer');
+
 const http = require('http');
 
 class AdvancedHttpServer {
@@ -10,7 +12,7 @@ class AdvancedHttpServer {
 
     start(port, lambdas, routes, authorizer, ignoreAuthorizerRoutes) {
 
-        let conductor = arupex.lib.routeAnalyzer.conductor(routes);
+        let conductor = routeAnalyzer.conductor(routes);
 
         this.server = http.createServer((req, res) => {
 
