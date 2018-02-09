@@ -66,7 +66,7 @@ module.exports = function (opts) {
 
     let injectableDataServices = utils.clientBuild(app.DataServices, activeEnvironment);
 
-    let injectables = {
+    let injectables = utils.aggregateInjector({
         arupexlib : lib,
         logger: lib.logger,
         env: activeEnvironment,
@@ -76,29 +76,20 @@ module.exports = function (opts) {
         i18n: lib.i18n,
         swagger: swagger,
         directoryLoader : directoryLoader
-    };
-
-    let workerInstances = utils.setupWorkers(app.Workers, injectables);
-
-    let preExecutionContextInjectables = utils.aggregateInjector(Object.assign(injectables), [
+    },[
         app.Core,
         app.Models
     ]);
 
-    injectables = Object.assign(injectables, preExecutionContextInjectables);//extend injectables with Core/Models/etc
+    let workerInstances = utils.setupWorkers(app.Workers, injectables);
 
     function generateExecutableLambdas(functions) {
         return Object.keys(functions || {}).reduce((acc, lambdaName) => {
 
-            //add the active function to the tail end of the middlware array
-            let middleware = policiesArray.concat(functions[lambdaName]);
-
-            //allow you to specify the order of your middleware
-            if (typeof opts.orderMiddleware === 'function') {
-                middleware = middleware.sort(opts.orderMiddleware);
-            }
-
             acc[lambdaName] = function (event, context, callback) {
+
+                delete injectables.event;
+                delete injectables.context;
 
                 if(typeof context === 'object') {
                     context.arupexAudit = [];
@@ -148,13 +139,28 @@ module.exports = function (opts) {
                     return acc;
                 }, {});
 
-                let mockContext = (typeof opts.mockContext === 'function') ? opts.mockContext(event, context) : null;//user includes a function to extra mocks
+                let mockContext = (typeof opts.mockContext === 'function') ? lib.injector(coreRuntimeInjectables, opts.mockContext, null, auditor) : null;//user includes a function to extra mocks
                 if (mockContext) {
                     logger.info('mocks are enabled for this session');
                     useableDataServices = utils.runtimeMockDataServices(useableDataServices, mockContext);
                 }
 
-                let injectableMiddlware = utils.aggregateInjector(Object.assign(coreRuntimeInjectables), [
+
+                //add the active function to the tail end of the middlware array
+                let middleware = policiesArray.concat(functions[lambdaName]);
+
+                //allow you to specify the order of your middleware
+                if (typeof opts.orderMiddleware === 'function') {
+                    middleware = middleware.sort(opts.orderMiddleware);
+                }
+
+                let injectableMiddlware = utils.aggregateInjector(Object.assign(utils.aggregateDejector(coreRuntimeInjectables, [
+                    app.Hooks,//must be first
+                    useableDataServices,
+                    app.DataServiceUtils,
+                    app.Services,
+                    // middleware//must be last
+                ]), { event: event, context : context}), [
                     app.Hooks,//must be first
                     useableDataServices,
                     app.DataServiceUtils,
@@ -166,10 +172,8 @@ module.exports = function (opts) {
                 lib.pipeline({
                     timeout: false
                 }, injectableMiddlware)(context, injectableResponse, (event, context) => {
-                    lib.injector(Object.assign(coreRuntimeInjectables, {
-                        event: event,
-                        context: context
-                    }), callback, null, auditor);
+                    callback('Arupex Hit a Dead-End');
+                    // lib.injector(d, callback, null, auditor);
                 });
             };
 
