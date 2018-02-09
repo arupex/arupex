@@ -67,6 +67,7 @@ module.exports = function (opts) {
     let injectableDataServices = utils.clientBuild(app.DataServices, activeEnvironment);
 
     let injectables = {
+        arupexlib : lib,
         logger: lib.logger,
         env: activeEnvironment,
         environment: activeEnvironment,

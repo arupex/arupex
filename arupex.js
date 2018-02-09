@@ -5,6 +5,7 @@
 
 module.exports = {
     interceptors : {
+        advancedHttp : require('./interceptors/advancedHttp'),
         http : require('./interceptors/http'),
         lambdas : require('./interceptors/lambdas'),
         mockServer : require('./interceptors/mockServer')
