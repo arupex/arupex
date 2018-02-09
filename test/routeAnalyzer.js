@@ -8,6 +8,16 @@ describe('Route-Analyzer', () => {
     let router = require('../lib/routeAnalyzer');
     let assert = require('assert');
 
+
+    function ignoreFields(fields){
+        return function(obj){
+          fields.forEach( e => delete obj[e]);
+          return obj;
+        };
+    }
+
+    const ignore = ignoreFields(['queryStringParameters','pathParameters','resource']);
+
     it('decompile route validation test', () => {
 
         let route = '/api/v1/measures/{{measureId}}/metadata?locale={{locale}}&session={{session}}';
@@ -20,7 +30,9 @@ describe('Route-Analyzer', () => {
             post : []
         };
 
-        assert.equal(JSON.stringify(router.conductor(routes)(testUrl), null , 3), JSON.stringify({
+        const actual = JSON.stringify(ignore(router.conductor(routes)(testUrl)), null , 3);
+
+        const expected = JSON.stringify({
             rail: {
                 action: '',
                 pre : [],
@@ -34,7 +46,9 @@ describe('Route-Analyzer', () => {
             pathParams: {
                 measureId: '123'
             }
-        }, null, 3));
+        }, null, 3);
+
+        assert.equal(actual, expected);
 
     });
 
@@ -89,9 +103,9 @@ describe('Route-Analyzer', () => {
 
         console.log(JSON.stringify(router.decompileRoute(route), null, 3));
 
-        const conducted = JSON.stringify(router.conductor(routes)(testUrl), null , 3);
-        console.log(conducted);
-        assert.equal(conducted, JSON.stringify({
+        const actual = JSON.stringify(ignore(router.conductor(routes)(testUrl)), null , 3);
+        console.log(actual);
+        const expected = JSON.stringify({
             rail: {
                 action: '',
                 pre : [],
@@ -106,7 +120,9 @@ describe('Route-Analyzer', () => {
                 measureId: '123',
                 friendlyId: '412'
             }
-        }, null, 3));
+        }, null, 3);
+
+        assert.equal(actual, expected);
 
     });
 
@@ -126,9 +142,9 @@ describe('Route-Analyzer', () => {
 
         console.log(JSON.stringify(router.decompileRoute(route), null, 3));
 
-        const conducted = JSON.stringify(router.conductor(routes)(testUrl), null , 3);
-        console.log(conducted);
-        assert.equal(conducted, JSON.stringify({
+        const actual = JSON.stringify(ignore(router.conductor(routes)(testUrl)), null , 3);
+        console.log(actual);
+        const expected = JSON.stringify({
             rail: {
                 action: '',
                 pre : [],
@@ -142,7 +158,47 @@ describe('Route-Analyzer', () => {
             pathParams: {
                 measureId: '123'
             }
-        }, null, 3));
+        }, null, 3);
+
+        assert.equal(actual, expected);
+
+    });
+
+
+
+    it('decompile route validation test with path param and immediate path params with hyphens', () => {
+
+        let route = '/api/v1/measures/{{measureId}}?locale={locale}&session={{session}}';
+        let testUrl = 'http://localhost:1337/api/v1/measures/12-34?locale=en_US&session=fr-ed';
+
+        let routes = {};
+        routes[route] = {
+            action : '',
+            pre : [],
+            post : []
+        };
+
+        console.log(JSON.stringify(router.decompileRoute(route), null, 3));
+
+        const actual = JSON.stringify(ignore(router.conductor(routes)(testUrl)), null , 3);
+        console.log(actual);
+        const expected = JSON.stringify({
+            rail: {
+                action: '',
+                pre : [],
+                post : []
+            },
+            requestedRoute: 'http://localhost:1337/api/v1/measures/12-34?locale=en_US&session=fr-ed',
+            queryParams: {
+                locale: 'en_US',
+                session: 'fr-ed'
+            },
+            pathParams: {
+                measureId: '12-34'
+            }
+        }, null, 3);
+
+        assert.equal(actual, expected);
 
     });
 
