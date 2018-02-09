@@ -60,7 +60,7 @@ Check out our [Documentation](./demo/README.md)
     └── package.json
     
 ## Dependency Injection LifeCycle
-can be thought of as a pyramid, were at each level the previous levels are injectable
+can be thought of as a pyramid, were at each level the previous levels are injectable as well as same level (as of v0.3.1)
 
                 ---------------
                /  Environment  \
