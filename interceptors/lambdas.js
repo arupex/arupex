@@ -66,7 +66,7 @@ module.exports = function (opts) {
 
     let injectableDataServices = utils.clientBuild(app.DataServices, activeEnvironment);
 
-    let injectables = utils.aggregateInjector({
+    let outerInjectables = utils.aggregateInjector({
         arupexlib : lib,
         logger: lib.logger,
         env: activeEnvironment,
@@ -81,15 +81,31 @@ module.exports = function (opts) {
         app.Models
     ]);
 
-    let workerInstances = utils.setupWorkers(app.Workers, injectables);
+
+    let workerInstances = utils.setupWorkers(app.Workers, outerInjectables);
 
     function generateExecutableLambdas(functions) {
         return Object.keys(functions || {}).reduce((acc, lambdaName) => {
 
             acc[lambdaName] = function (event, context, callback) {
 
-                delete injectables.event;
-                delete injectables.context;
+                let coreRuntimeInjectables = utils.aggregateInjector({
+                    arupexlib : lib,
+                    logger: lib.logger,
+                    env: activeEnvironment,
+                    environment: activeEnvironment,
+                    tracer: lib.tracer,
+                    meter: lib.meter,
+                    i18n: lib.i18n,
+                    swagger: swagger,
+                    directoryLoader : directoryLoader,
+                    event : event,
+                    context : context,
+                    callback : callback
+                },[
+                    app.Core,
+                    app.Models
+                ]);
 
                 if(typeof context === 'object') {
                     context.arupexAudit = [];
@@ -121,14 +137,8 @@ module.exports = function (opts) {
 
                 let metricTracer = opts.disableTracer? null : lib.metricTracer(opts.meterFnc, opts.traceFnc, auditor);
 
-                //give hooks event,context, etc injectables
-                let coreRuntimeInjectables = Object.assign(injectables, {
-                    event: event,
-                    context: context
-                });
-
                 //init responses with the ability to inject the callback and on the fly inject the 'data' param
-                let injectableResponse = utils.injectDataFirst(Object.assign(coreRuntimeInjectables, { callback : callback }), app.Responses, metricTracer);
+                let injectableResponse = utils.injectDataFirst(coreRuntimeInjectables, app.Responses, metricTracer);
                 coreRuntimeInjectables.res = injectableResponse;
 
                 let useableDataServices = Object.keys(injectableDataServices).reduce((acc, serviceName) => {
@@ -154,13 +164,13 @@ module.exports = function (opts) {
                     middleware = middleware.sort(opts.orderMiddleware);
                 }
 
-                let injectableMiddlware = utils.aggregateInjector(Object.assign(utils.aggregateDejector(coreRuntimeInjectables, [
-                    app.Hooks,//must be first
+                // Guarantee that old stuff is gone
+                let injectableMiddlware = utils.aggregateInjector(utils.aggregateDejector(coreRuntimeInjectables, [
+                    app.Hooks,
                     useableDataServices,
                     app.DataServiceUtils,
                     app.Services,
-                    // middleware//must be last
-                ]), { event: event, context : context}), [
+                ]), [
                     app.Hooks,//must be first
                     useableDataServices,
                     app.DataServiceUtils,
