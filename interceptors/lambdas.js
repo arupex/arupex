@@ -165,12 +165,7 @@ module.exports = function (opts) {
                 }
 
                 // Guarantee that old stuff is gone
-                let injectableMiddlware = utils.aggregateInjector(utils.aggregateDejector(coreRuntimeInjectables, [
-                    app.Hooks,
-                    useableDataServices,
-                    app.DataServiceUtils,
-                    app.Services,
-                ]), [
+                let injectableMiddlware = utils.aggregateInjector(coreRuntimeInjectables, [
                     app.Hooks,//must be first
                     useableDataServices,
                     app.DataServiceUtils,
