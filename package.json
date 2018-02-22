@@ -1,6 +1,6 @@
 {
   "name": "arupex",
-  "version": "0.3.2",
+  "version": "1.0.0",
   "description": "",
   "main": "arupex.js",
   "scripts": {
@@ -46,7 +46,7 @@
   },
   "homepage": "https://github.com/arupex/arupex#readme",
   "dependencies": {
-    "hyper-request": "^2.0.1"
+    "hyper-request": "^2.1.2"
   },
   "devDependencies": {
     "mocha": "^3.4.2"

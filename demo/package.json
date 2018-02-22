@@ -1,8 +1,8 @@
 {
   "name": "arupex-demo",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "dependencies": {
-    "arupex": "git+http://github.com/arupex/arupex#0.3.1",
+    "arupex": "git+http://github.com/arupex/arupex#1.0.0",
     "moment": "^2.18.1"
   }
 }
