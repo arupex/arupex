@@ -16,7 +16,18 @@ describe('Route-Analyzer', () => {
         };
     }
 
-    const ignore = ignoreFields(['queryStringParameters','pathParameters','resource']);
+    const ignore = ignoreFields([
+        'queryStringParameters',
+        'pathParameters',
+        'resource',
+        'method',
+        'route',
+        'regex',
+        'path',
+        'pathPieces',
+        'routePieces',
+        'query'
+    ]);
 
     it('decompile route validation test', () => {
 
@@ -24,27 +35,19 @@ describe('Route-Analyzer', () => {
         let testUrl = 'http://localhost:1337/api/v1/measures/123/metadata?locale=en_US&session=fred';
 
         let routes = {};
-        routes[route] = {
-            action : '',
-            pre : [],
-            post : []
-        };
+        routes[route] = 'thing';
 
         const actual = JSON.stringify(ignore(router.conductor(routes)(testUrl)), null , 3);
 
         const expected = JSON.stringify({
-            rail: {
-                action: '',
-                pre : [],
-                post : []
+            pathParams: {
+                measureId: '123'
             },
+            rail: 'thing',
             requestedRoute: 'http://localhost:1337/api/v1/measures/123/metadata?locale=en_US&session=fred',
             queryParams: {
                 locale: 'en_US',
                 session: 'fred'
-            },
-            pathParams: {
-                measureId: '123'
             }
         }, null, 3);
 
@@ -66,11 +69,7 @@ describe('Route-Analyzer', () => {
     it('required parameters route', (done) => {
 
         let routes = {
-            '/api/v1/measures/{{measureId}}/metadata?locale={{locale}}&ticket={{session}}&friend={{friend}}&notrequired={notrequired}' : {
-                action : '',
-                pre : [],
-                post : []
-            }
+            '/api/v1/measures/{{measureId}}/metadata?locale={{locale}}&ticket={{session}}&friend={{friend}}&notrequired={notrequired}' : 'fnc'
         };
         //first one should be a success
         router.conductor(routes)('http://localhost:1337/api/v1/measures/123/metadata?locale=en_US&ticket=gary&friend=fred');
@@ -95,30 +94,22 @@ describe('Route-Analyzer', () => {
         let testUrl = 'http://localhost:1337/api/v1/measures/123/412/?locale=en_US&session=fred';
 
         let routes = {};
-        routes[route] = {
-            action : '',
-            pre : [],
-            post : []
-        };
+        routes[route] = 'fnc';
 
         console.log(JSON.stringify(router.decompileRoute(route), null, 3));
 
         const actual = JSON.stringify(ignore(router.conductor(routes)(testUrl)), null , 3);
         console.log(actual);
         const expected = JSON.stringify({
-            rail: {
-                action: '',
-                pre : [],
-                post : []
+            pathParams: {
+                measureId: '123',
+                friendlyId: '412'
             },
+            rail: 'fnc',
             requestedRoute: 'http://localhost:1337/api/v1/measures/123/412/?locale=en_US&session=fred',
             queryParams: {
                 locale: 'en_US',
                 session: 'fred'
-            },
-            pathParams: {
-                measureId: '123',
-                friendlyId: '412'
             }
         }, null, 3);
 
@@ -134,29 +125,21 @@ describe('Route-Analyzer', () => {
         let testUrl = 'http://localhost:1337/api/v1/measures/123?locale=en_US&session=fred';
 
         let routes = {};
-        routes[route] = {
-            action : '',
-            pre : [],
-            post : []
-        };
+        routes[route] = 'fnc';
 
         console.log(JSON.stringify(router.decompileRoute(route), null, 3));
 
         const actual = JSON.stringify(ignore(router.conductor(routes)(testUrl)), null , 3);
         console.log(actual);
         const expected = JSON.stringify({
-            rail: {
-                action: '',
-                pre : [],
-                post : []
+            pathParams: {
+                measureId: '123'
             },
+            rail: 'fnc',
             requestedRoute: 'http://localhost:1337/api/v1/measures/123?locale=en_US&session=fred',
             queryParams: {
                 locale: 'en_US',
                 session: 'fred'
-            },
-            pathParams: {
-                measureId: '123'
             }
         }, null, 3);
 
@@ -172,29 +155,21 @@ describe('Route-Analyzer', () => {
         let testUrl = 'http://localhost:1337/api/v1/measures/12-34?locale=en_US&session=fr-ed';
 
         let routes = {};
-        routes[route] = {
-            action : '',
-            pre : [],
-            post : []
-        };
+        routes[route] = 'fnc';
 
         console.log(JSON.stringify(router.decompileRoute(route), null, 3));
 
         const actual = JSON.stringify(ignore(router.conductor(routes)(testUrl)), null , 3);
         console.log(actual);
         const expected = JSON.stringify({
-            rail: {
-                action: '',
-                pre : [],
-                post : []
+            pathParams: {
+                measureId: '12-34'
             },
+            rail: 'fnc',
             requestedRoute: 'http://localhost:1337/api/v1/measures/12-34?locale=en_US&session=fr-ed',
             queryParams: {
                 locale: 'en_US',
                 session: 'fr-ed'
-            },
-            pathParams: {
-                measureId: '12-34'
             }
         }, null, 3);
 

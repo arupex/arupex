@@ -80,7 +80,10 @@ class AdvancedHttpServer {
                         if (err) {
                             console.log('oh snap', err);
                         }
-                        data = JSON.parse(data ? data.body : {});
+
+                        if(data && typeof data === 'object' && typeof data.body === 'string') {
+                            data = JSON.parse(data.body);
+                        }
 
                         res.setHeader('Access-Control-Allow-Origin', '*');
                         res.setHeader('Content-Type', 'application/json');
