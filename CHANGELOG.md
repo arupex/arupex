@@ -58,3 +58,5 @@ Cleanup of lambda interceptor!
 - as well as now allow injections at same tier
 - fix issue were path params didnt handle hyphens well
 - Reformat CHANGELOG.md
+
+### 0.3.2 - 0.3.3 - small http server fixes
