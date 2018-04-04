@@ -80,6 +80,7 @@ class AdvancedHttpServer {
                 }, {}, (authorizerErr, authorizerData) => {
 
                     if (authorizerErr || authorizerData.statusCode === 401 || (typeof authorizerData.body === 'object' && authorizerData.body.code === 401) || AdvancedHttpServer.denied(authorizerData, chosenRoute.resource)) {
+                        res.statusCode = 401;
                         return res.end(JSON.stringify({
                             code: 401,
                             message: 'authorization failed'
