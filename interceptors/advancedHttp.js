@@ -10,6 +10,28 @@ class AdvancedHttpServer {
         this.server = null;
     }
 
+    static denied (data, resource) {
+        if (data && typeof data === 'object' &&
+            data.policyDocument && typeof data.policyDocument === 'object' &&
+            Array.isArray(data.policyDocument.Statement)) {
+            if(data.policyDocument.Statement.every(statement => statement.Effect === 'Deny')) {
+                return true;
+            }
+            if(data.policyDocument.Statement.some(statement => statement.Effect === 'Deny')) {
+                return data.policyDocument.Statement.some(statement => {
+                    try {
+                        if(statement.Effect === 'Deny' && typeof statement.Resource === 'string') {
+                            return RegExp(statement.Resource.replace(/\*/, '.*')).test(resource);
+                        }
+                    }
+                    catch(e){}
+                    return false;
+                });
+            }
+        }
+        return false;
+    }
+
     start(port, lambdas, routes, authorizer, ignoreAuthorizerRoutes) {
 
         let conductor = routeAnalyzer.conductor(routes);
@@ -57,7 +79,7 @@ class AdvancedHttpServer {
                     resource: 'auth'
                 }, {}, (authorizerErr, authorizerData) => {
 
-                    if (authorizerErr || authorizerData.statusCode === 401 || (typeof authorizerData.body === 'object' && authorizerData.body.code === 401)) {
+                    if (authorizerErr || authorizerData.statusCode === 401 || (typeof authorizerData.body === 'object' && authorizerData.body.code === 401) || AdvancedHttpServer.denied(authorizerData, chosenRoute.resource)) {
                         return res.end(JSON.stringify({
                             code: 401,
                             message: 'authorization failed'
