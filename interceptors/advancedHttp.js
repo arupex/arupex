@@ -32,7 +32,7 @@ class AdvancedHttpServer {
         return false;
     }
 
-    start(port, lambdas, routes, authorizer, ignoreAuthorizerRoutes) {
+    start(port, lambdas, routes, authorizer, ignoreAuthorizerRoutes, authFunc) {
 
         let conductor = routeAnalyzer.conductor(routes);
 
@@ -75,7 +75,7 @@ class AdvancedHttpServer {
                 sessionAuthorizer({
                     type: 'TOKEN',
                     methodArn: 'arn:aws:execute-api:us-west-2:123456789:sbcdefgh/null/GET/',
-                    authorizationToken: req.headers.authorization || req.headers.Authorization,
+                    authorizationToken: typeof authFunc === 'function' ? authFunc(req) : (req.headers.authorization || req.headers.Authorization),
                     resource: 'auth'
                 }, {}, (authorizerErr, authorizerData) => {
 

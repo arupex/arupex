@@ -61,3 +61,10 @@ Cleanup of lambda interceptor!
 
 ### 0.4.0 -
 - Using arupex-logger for logger instead of internal
+
+### 0.4.1
+- Allow AdvancedHttp start to have a authFunc which returns the 'authorizationToken' value for authorizers
+    ie.
+    
+    
+    server.start(1337, lambdas, routes, authorizer, ignoredRoutes, (req) => req.headers.customAuthHeader);
