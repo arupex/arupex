@@ -4,7 +4,7 @@
 module.exports = function (opts) {
 
     let loggerFactory = require('../lib/logger');
-    let logger = new loggerFactory('Lambda-Interceptor', { level : (opts.logLevel||'warn') });
+    let logger = new loggerFactory('Arupex-Lambda-Interceptor', { level : (opts.logLevel||'warn') });
 
     let directoryLoader = require('../lib/multiDirLoader');
 
@@ -87,25 +87,7 @@ module.exports = function (opts) {
     function generateExecutableLambdas(functions) {
         return Object.keys(functions || {}).reduce((acc, lambdaName) => {
 
-            acc[lambdaName] = function (event, context, callback) {
-
-                let coreRuntimeInjectables = utils.aggregateInjector({
-                    arupexlib : lib,
-                    logger: lib.logger,
-                    env: activeEnvironment,
-                    environment: activeEnvironment,
-                    tracer: lib.tracer,
-                    meter: lib.meter,
-                    i18n: lib.i18n,
-                    swagger: swagger,
-                    directoryLoader : directoryLoader,
-                    event : event,
-                    context : context,
-                    callback : callback
-                },[
-                    app.Core,
-                    app.Models
-                ]);
+            acc[lambdaName] = async function (event, context, callback) {
 
                 if(typeof context === 'object') {
                     context.arupexAudit = [];
@@ -130,6 +112,53 @@ module.exports = function (opts) {
                         }
                     }
                 };
+
+
+                if(typeof opts.asyncPreHook === 'function') {
+                    await opts.asyncPreHook({
+                        LOG : new loggerFactory('Async-Pre-Hook', auditor),
+                        event : event,
+                        logger: lib.logger,
+                        ENTRY_POINT : lambdaName,
+                        audit : context.arupexAudit
+                    });
+                }
+
+                let cb = async () => {
+                    if(typeof opts.asyncPostHook === 'function') {
+                        await opts.asyncPostHook({
+                            LOG : new loggerFactory('Async-Post-Hook', auditor),
+                            event : event,
+                            logger: lib.logger,
+                            ENTRY_POINT : lambdaName,
+                            err : arguments[0],
+                            data : arguments[1],
+                            audit : context.arupexAudit
+                        });
+                    }
+                    return await callback.apply(this, arguments);
+                };
+
+
+                let coreRuntimeInjectables = utils.aggregateInjector({
+                    ENTRY_POINT : lambdaName,
+                    arupexlib : lib,
+                    logger: lib.logger,
+                    env: activeEnvironment,
+                    environment: activeEnvironment,
+                    tracer: lib.tracer,
+                    meter: lib.meter,
+                    i18n: lib.i18n,
+                    swagger: swagger,
+                    directoryLoader : directoryLoader,
+                    event : event,
+                    context : context,
+                    callback : cb
+                },[
+                    app.Core,
+                    app.Models
+                ]);
+
 
                 if (typeof context === 'object' && !opts.callbackWaitsForEmptyEventLoop) {
                     context.callbackWaitsForEmptyEventLoop = false;//so aws does not keep running lambda after callback
