@@ -58,3 +58,13 @@ Cleanup of lambda interceptor!
 - as well as now allow injections at same tier
 - fix issue were path params didnt handle hyphens well
 - Reformat CHANGELOG.md
+
+### 0.4.0 -
+- Using arupex-logger for logger instead of internal
+
+### 0.4.1
+- Allow AdvancedHttp start to have a authFunc which returns the 'authorizationToken' value for authorizers
+    ie.
+    
+    
+    server.start(1337, lambdas, routes, authorizer, ignoredRoutes, (req) => req.headers.customAuthHeader);

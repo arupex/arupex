@@ -40,6 +40,7 @@ describe('Route-Analyzer', () => {
         const actual = JSON.stringify(ignore(router.conductor(routes)(testUrl)), null , 3);
 
         const expected = JSON.stringify({
+            length: 39,
             pathParams: {
                 measureId: '123'
             },
@@ -101,6 +102,7 @@ describe('Route-Analyzer', () => {
         const actual = JSON.stringify(ignore(router.conductor(routes)(testUrl)), null , 3);
         console.log(actual);
         const expected = JSON.stringify({
+            length: 45,
             pathParams: {
                 measureId: '123',
                 friendlyId: '412'
@@ -132,6 +134,7 @@ describe('Route-Analyzer', () => {
         const actual = JSON.stringify(ignore(router.conductor(routes)(testUrl)), null , 3);
         console.log(actual);
         const expected = JSON.stringify({
+            length: 30,
             pathParams: {
                 measureId: '123'
             },
@@ -162,6 +165,7 @@ describe('Route-Analyzer', () => {
         const actual = JSON.stringify(ignore(router.conductor(routes)(testUrl)), null , 3);
         console.log(actual);
         const expected = JSON.stringify({
+            length: 30,
             pathParams: {
                 measureId: '12-34'
             },
