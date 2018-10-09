@@ -11,6 +11,8 @@ let server = null;
 let appCreator = require('./appCreator');
 let logger = new arupex.lib.logger('CLI-Logger');
 
+console.log(`mode=${cmd}; port=${port}; tracerDisabled=${disableTrace}; watch=${watch}; functionName=${functionName}`);
+
 function ignoreEmpty(value, label){
     return (typeof value!=='undefined'?`${label?label:''} ${value}`:'');
 }

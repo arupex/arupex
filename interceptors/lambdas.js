@@ -164,7 +164,8 @@ module.exports = function (opts) {
                     context.callbackWaitsForEmptyEventLoop = false;//so aws does not keep running lambda after callback
                 }
 
-                let metricTracer = opts.disableTracer? null : lib.metricTracer(opts.meterFnc, opts.traceFnc, auditor);
+                // default tracer off
+                let metricTracer = opts.enableTracer? lib.metricTracer(opts.meterFnc, opts.traceFnc, auditor) : null;
 
                 //init responses with the ability to inject the callback and on the fly inject the 'data' param
                 let injectableResponse = utils.injectDataFirst(coreRuntimeInjectables, app.Responses, metricTracer);
