@@ -46,7 +46,7 @@
   },
   "homepage": "https://github.com/arupex/arupex#readme",
   "dependencies": {
-    "arupex-logger": "^1.0.4",
+    "arupex-logger": "^1.0.5",
     "hyper-request": "^3.2.0"
   },
   "devDependencies": {
