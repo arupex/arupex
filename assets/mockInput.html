@@ -33,7 +33,7 @@
 
 
 <button onclick="Run()">Execute</button>
-<select id="functionName">
+<select id="functionName" onchange="updateSample()">
 </select>
 
 <label>Enable Mocks</label><input type="checkbox" id="enableMocks" value="Enable Mocks">
@@ -111,6 +111,19 @@
         var oMyBlob = new Blob(aFileParts, {type: 'application/json'}); // the blob
         window.open(URL.createObjectURL(oMyBlob));
     }
+
+    var sampleEvent = {};
+
+    function updateSample(){
+        var funcSelector = document.getElementById('functionName');
+        var functionName = funcSelector.options[funcSelector.selectedIndex].value;
+
+        if(sampleEvent[functionName]) {
+            document.getElementById('event').value = JSON.stringify(sampleEvent[functionName], null, 3);
+        }
+
+    }
+
     function loadSchemaFile() {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
@@ -119,10 +132,12 @@
                 loadFunctions(result.functionNames);
                 schema = result.schema;
 
-
+                sampleEvent = result.sampleEvent;
                 document.getElementById('event').value = JSON.stringify(result.sampleEvent, null, 3);
 
                 loadScheme(schema);
+
+                updateSample();
             }
         };
         xhttp.open("GET", "primer_schema.json", true);
