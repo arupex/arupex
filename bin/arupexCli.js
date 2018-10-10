@@ -21,7 +21,12 @@ function sampleEvent(dir){
         return JSON.parse(fs.readFileSync(`${dir}/event.json`, 'utf8'));
     }
     catch(e){
-        return {};
+        try {
+            return require(`${dir}/event.js`);
+        }
+        catch(e){
+            return {};
+        }
     }
 }
 function run() {
