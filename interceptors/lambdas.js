@@ -66,6 +66,7 @@ module.exports = function (opts) {
 
     let injectableDataServices = utils.clientBuild(app.DataServices, activeEnvironment);
 
+
     let outerInjectables = utils.aggregateInjector({
         arupexlib : lib,
         logger: lib.logger,
@@ -89,14 +90,14 @@ module.exports = function (opts) {
 
             acc[lambdaName] = async function (event, context, callback) {
 
-                if(typeof context === 'object') {
+                if(context && typeof context === 'object') {
                     context.arupexAudit = [];
                 }
 
                 let auditor = {
                     logLevel : 'info',
                     errStream : {
-                        write : typeof opts.errStreamWrite === 'function'? opts.errStreamWrite:function(data){
+                        write : typeof activeEnvironment.errStreamWrite === 'function'? activeEnvironment.errStreamWrite:function(data){
                             process.stderr.write(data);
                             if(context && Array.isArray(context.arupexAudit)) {
                                 context.arupexAudit.push({errStream :data});
@@ -104,7 +105,7 @@ module.exports = function (opts) {
                         }
                     },
                     outStream : {
-                        write : typeof opts.outStreamWrite === 'function'?opts.outStreamWrite:function(data){
+                        write : typeof activeEnvironment.outStreamWrite === 'function'?activeEnvironment.outStreamWrite:function(data){
                             process.stdout.write(data);
                             if(context && Array.isArray(context.arupexAudit)) {
                                 context.arupexAudit.push({ outStream : data});
@@ -113,9 +114,8 @@ module.exports = function (opts) {
                     }
                 };
 
-
-                if(typeof opts.asyncPreHook === 'function') {
-                    await opts.asyncPreHook({
+                if(typeof activeEnvironment.asyncPreHook === 'function') {
+                    await activeEnvironment.asyncPreHook({
                         LOG : new loggerFactory('Async-Pre-Hook', auditor),
                         event : event,
                         logger: lib.logger,
@@ -125,8 +125,8 @@ module.exports = function (opts) {
                 }
 
                 let cb = async () => {
-                    if(typeof opts.asyncPostHook === 'function') {
-                        await opts.asyncPostHook({
+                    if(typeof activeEnvironment.asyncPostHook === 'function') {
+                        await activeEnvironment.asyncPostHook({
                             LOG : new loggerFactory('Async-Post-Hook', auditor),
                             event : event,
                             logger: lib.logger,
