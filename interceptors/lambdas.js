@@ -48,9 +48,14 @@ module.exports = function (opts) {
         routes = opts.routes;
     }
 
-    let activeEnvironment = (app.Environments || {})[opts.env || process.env.ENVIRONMENT || 'dev'];
+    let envName = opts.env || process.env.ENVIRONMENT || 'dev';
+
+    logger.info(`loading ${envName} environment`);
+
+    let activeEnvironment = (app.Environments || {})[envName];
+
     if (typeof activeEnvironment !== 'object') {
-        logger.warn('error no active environment to set the active environment set the ENVIRONMENT variable - default:dev\n');
+        logger.warn(`error no active environment to set the active environment set the ENVIRONMENT variable - default:dev`);
         activeEnvironment = {};//fix it sort of ?
     }
 
